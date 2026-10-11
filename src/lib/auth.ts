@@ -25,7 +25,8 @@ export async function startSession(user: { id: string; role: string }) {
   const token = await signSession({ sub: user.id, role: user.role });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // HTTPS yokken (ör. yalnızca IP ile erişim) COOKIE_SECURE="false" verilmeli, yoksa tarayıcı çerezi kaydetmez
+    secure: process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === "true" : process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE,
