@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { logoutAction } from "@/app/actions";
 import { formatTL } from "@/lib/money";
-
-type NavItem = { href: string; label: string };
+import { IconLogout, IconWallet } from "./Icons";
+import { Logo } from "./Logo";
+import { NavLinks, type NavItem } from "./NavLinks";
+import * as Icons from "./Icons";
 
 export function Shell({
   title,
@@ -19,64 +20,123 @@ export function Shell({
   balanceLabel?: string;
   children: React.ReactNode;
 }) {
+  const initials = user.name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toLocaleUpperCase("tr-TR");
+
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-lg font-bold text-brand-600">
-              Baskı3D
-            </Link>
-            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{title}</span>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            {showBalance && (
-              <span className="rounded-lg bg-brand-50 px-3 py-1 font-semibold text-brand-700">
-                {balanceLabel}: {formatTL(user.balance)}
+    <div className="min-h-screen bg-ink-50">
+      <header className="sticky top-0 z-30 bg-ink-900 bg-plate">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div className="flex items-center gap-3">
+              <Logo dark />
+              <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-ink-300">
+                {title}
               </span>
-            )}
-            <span className="hidden text-gray-600 sm:inline">{user.name}</span>
-            <form action={logoutAction}>
-              <button className="text-gray-500 hover:text-gray-900">Çıkış</button>
-            </form>
+            </div>
+            <div className="flex items-center gap-3">
+              {showBalance && (
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
+                  <IconWallet className="h-4 w-4 text-filament-orange" />
+                  <span className="hidden text-xs text-ink-300 sm:inline">{balanceLabel}</span>
+                  <span className="font-mono text-sm font-semibold text-white">{formatTL(user.balance)}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-filament-orange to-filament-pink text-xs font-bold text-white">
+                  {initials}
+                </span>
+                <span className="hidden text-sm text-ink-200 md:inline">{user.name}</span>
+              </div>
+              <form action={logoutAction}>
+                <button
+                  className="grid h-8 w-8 place-items-center rounded-lg text-ink-300 transition hover:bg-white/10 hover:text-white"
+                  title="Çıkış yap"
+                  aria-label="Çıkış yap"
+                >
+                  <IconLogout className="h-4 w-4" />
+                </button>
+              </form>
+            </div>
           </div>
+          <NavLinks items={nav} />
         </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="whitespace-nowrap border-b-2 border-transparent px-3 py-2 text-sm font-medium text-gray-600 hover:border-brand-500 hover:text-gray-900"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="filament-line" />
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
     </div>
   );
 }
 
-export function PageTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+export function PageTitle({
+  children,
+  action,
+  eyebrow,
+  description,
+}: {
+  children: React.ReactNode;
+  action?: React.ReactNode;
+  eyebrow?: string;
+  description?: React.ReactNode;
+}) {
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <h1 className="text-2xl font-bold">{children}</h1>
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        {eyebrow && <p className="eyebrow mb-1">{eyebrow}</p>}
+        <h1 className="text-2xl font-bold sm:text-3xl">{children}</h1>
+        {description && <p className="mt-1 text-sm text-ink-500">{description}</p>}
+      </div>
       {action}
     </div>
   );
 }
 
-export function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+const ACCENTS = {
+  orange: "from-filament-orange/15 text-filament-orange",
+  pink: "from-filament-pink/15 text-filament-pink",
+  cyan: "from-filament-cyan/20 text-cyan-600",
+  lime: "from-filament-lime/25 text-lime-700",
+} as const;
+
+export function Stat({
+  label,
+  value,
+  hint,
+  icon,
+  accent = "orange",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  icon?: keyof typeof Icons;
+  accent?: keyof typeof ACCENTS;
+}) {
+  const Icon = icon ? Icons[icon] : null;
   return (
-    <div className="card">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
-      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
+    <div className="card relative overflow-hidden">
+      <div className={`pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br to-transparent ${ACCENTS[accent]}`} />
+      <div className="relative flex items-start justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">{label}</p>
+        {Icon && <Icon className={`h-5 w-5 ${ACCENTS[accent].split(" ")[1]}`} />}
+      </div>
+      <p className="relative mt-2 font-display text-2xl font-bold tracking-tight">{value}</p>
+      {hint && <p className="relative mt-1 text-xs text-ink-400">{hint}</p>}
     </div>
   );
 }
 
-export function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">{children}</p>;
+export function Empty({ children, icon = "IconCube" }: { children: React.ReactNode; icon?: keyof typeof Icons }) {
+  const Icon = Icons[icon];
+  return (
+    <div className="bg-plate-light flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-200 px-6 py-10 text-center text-sm text-ink-500">
+      <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-ink-400 shadow-card">
+        <Icon className="h-6 w-6" />
+      </span>
+      <div>{children}</div>
+    </div>
+  );
 }

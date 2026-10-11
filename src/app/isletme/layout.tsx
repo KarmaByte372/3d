@@ -12,12 +12,12 @@ export default async function BusinessLayout({ children }: { children: React.Rea
       showBalance
       balanceLabel="Ödenecek kazanç"
       nav={[
-        { href: "/isletme", label: "Özet" },
-        { href: "/isletme/talepler", label: "Açık talepler" },
-        { href: "/isletme/teklifler", label: "Tekliflerim" },
-        { href: "/isletme/siparisler", label: "Siparişler" },
-        { href: "/isletme/kazanc", label: "Kazanç & ödemeler" },
-        { href: "/isletme/profil", label: "Profil & IBAN" },
+        { href: "/isletme", label: "Özet", icon: "IconHome" },
+        { href: "/isletme/talepler", label: "Açık talepler", icon: "IconSearch" },
+        { href: "/isletme/teklifler", label: "Tekliflerim", icon: "IconQuote" },
+        { href: "/isletme/siparisler", label: "Siparişler", icon: "IconNozzle" },
+        { href: "/isletme/kazanc", label: "Kazanç & ödemeler", icon: "IconWallet" },
+        { href: "/isletme/profil", label: "Profil & IBAN", icon: "IconUser" },
       ]}
     >
       {children}

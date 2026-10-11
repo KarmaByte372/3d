@@ -1,5 +1,6 @@
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { Badge } from "@/components/Badge";
+import { IconBank, IconCard } from "@/components/Icons";
 import { LedgerTable } from "@/components/LedgerTable";
 import { PageTitle, Stat } from "@/components/Shell";
 import { requireUser } from "@/lib/auth";
@@ -23,16 +24,16 @@ export default async function BalancePage() {
 
   return (
     <>
-      <PageTitle>Bakiye</PageTitle>
+      <PageTitle eyebrow="Cüzdan">Bakiye</PageTitle>
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        <Stat label="Kullanılabilir bakiye" value={formatTL(user.balance)} />
-        <Stat label="Güvencedeki ödemeler" value={formatTL(held._sum.amount ?? 0)} hint="Devam eden siparişler için emanette" />
+        <Stat icon="IconWallet" accent="orange" label="Kullanılabilir bakiye" value={formatTL(user.balance)} />
+        <Stat icon="IconShield" accent="cyan" label="Güvencedeki ödemeler" value={formatTL(held._sum.amount ?? 0)} hint="Devam eden siparişler için emanette" />
       </div>
 
       <div className="mb-8 grid gap-4 md:grid-cols-2">
         <div className="card">
-          <h2 className="mb-1 font-semibold">Kartla yükle</h2>
-          <p className="mb-3 text-sm text-gray-500">3D Secure ile anında. Limit: {limits}</p>
+          <h2 className="mb-1 flex items-center gap-2 font-semibold"><IconCard className="h-5 w-5 text-brand-600" /> Kartla yükle</h2>
+          <p className="mb-3 text-sm text-ink-500">3D Secure ile anında. Limit: {limits}</p>
           {cardEnabled ? (
             <ActionForm action={cardTopUpAction} className="flex gap-2">
               <input className="input" name="amount" inputMode="decimal" placeholder="Tutar (TL)" required />
@@ -43,8 +44,8 @@ export default async function BalancePage() {
           )}
         </div>
         <div className="card">
-          <h2 className="mb-1 font-semibold">Havale / EFT ile yükle</h2>
-          <p className="mb-3 text-sm text-gray-500">
+          <h2 className="mb-1 flex items-center gap-2 font-semibold"><IconBank className="h-5 w-5 text-brand-600" /> Havale / EFT ile yükle</h2>
+          <p className="mb-3 text-sm text-ink-500">
             {settings.bankName} · {settings.bankAccountHolder}<br />
             <span className="font-mono">{settings.bankIban}</span><br />
             Önce bildirim oluştur, açıklamaya verilen kodu yaz. Onaydan sonra bakiyene geçer.
@@ -62,7 +63,7 @@ export default async function BalancePage() {
           <div className="card mb-8 overflow-x-auto p-0">
             <table className="table">
               <thead><tr><th>Tarih</th><th>Yöntem</th><th>Kod</th><th>Tutar</th><th>Durum</th><th>Not</th></tr></thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {topUps.map((t) => (
                   <tr key={t.id}>
                     <td>{formatDateTime(t.createdAt)}</td>

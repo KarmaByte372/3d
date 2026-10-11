@@ -10,7 +10,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
   const b = user.business!;
   return (
     <>
-      <PageTitle>Profil & IBAN</PageTitle>
+      <PageTitle eyebrow="Atölye">Profil & IBAN</PageTitle>
       {hosgeldin && (
         <div className="mb-5 rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-green-900">
           Hesabın oluşturuldu! Profilini tamamla ve ödeme alabilmek için IBAN&apos;ını ekle.
@@ -50,7 +50,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
               <input className="input" id="materials" name="materials" defaultValue={b.materials} placeholder="PLA, PETG, ABS, Reçine" />
             </div>
           </div>
-          <fieldset className="rounded-lg border border-gray-200 p-4">
+          <fieldset className="rounded-lg border border-ink-200 p-4">
             <legend className="px-1 text-sm font-semibold">Ödeme hesabı (çarşamba ödemeleri)</legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>

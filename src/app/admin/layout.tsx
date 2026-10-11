@@ -10,12 +10,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       title="Admin"
       user={user}
       nav={[
-        { href: "/admin", label: "Özet" },
-        { href: "/admin/kullanicilar", label: "Kullanıcılar" },
-        { href: "/admin/yuklemeler", label: "Bakiye yüklemeleri" },
-        { href: "/admin/siparisler", label: "Siparişler" },
-        { href: "/admin/odemeler", label: "Çarşamba ödemeleri" },
-        { href: "/admin/ayarlar", label: "Ayarlar" },
+        { href: "/admin", label: "Özet", icon: "IconChart" },
+        { href: "/admin/kullanicilar", label: "Kullanıcılar", icon: "IconUsers" },
+        { href: "/admin/yuklemeler", label: "Bakiye yüklemeleri", icon: "IconCard" },
+        { href: "/admin/siparisler", label: "Siparişler", icon: "IconBox" },
+        { href: "/admin/odemeler", label: "Çarşamba ödemeleri", icon: "IconCalendar" },
+        { href: "/admin/ayarlar", label: "Ayarlar", icon: "IconSettings" },
       ]}
     >
       {children}

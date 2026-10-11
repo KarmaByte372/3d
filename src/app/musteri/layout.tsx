@@ -11,10 +11,10 @@ export default async function CustomerLayout({ children }: { children: React.Rea
       user={user}
       showBalance
       nav={[
-        { href: "/musteri", label: "Taleplerim" },
-        { href: "/musteri/talep/yeni", label: "Yeni talep" },
-        { href: "/musteri/siparisler", label: "Siparişlerim" },
-        { href: "/musteri/bakiye", label: "Bakiye" },
+        { href: "/musteri", label: "Taleplerim", icon: "IconLayers" },
+        { href: "/musteri/talep/yeni", label: "Yeni talep", icon: "IconPlus" },
+        { href: "/musteri/siparisler", label: "Siparişlerim", icon: "IconBox" },
+        { href: "/musteri/bakiye", label: "Bakiye", icon: "IconWallet" },
       ]}
     >
       {children}

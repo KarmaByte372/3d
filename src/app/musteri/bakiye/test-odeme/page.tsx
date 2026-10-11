@@ -19,7 +19,7 @@ export default async function MockPaymentPage({ searchParams }: { searchParams: 
       <div className="card border-amber-300">
         <p className="mb-2 rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">TEST ÖDEME SAYFASI</p>
         <h1 className="text-xl font-bold">{formatTL(topUp.amount)}</h1>
-        <p className="mb-4 text-sm text-gray-600">
+        <p className="mb-4 text-sm text-ink-600">
           Gerçek kurulumda burası ödeme sağlayıcısının (iyzico, PayTR…) 3D Secure sayfasıdır. Referans: {topUp.reference}
         </p>
         {topUp.status === "PENDING" ? (

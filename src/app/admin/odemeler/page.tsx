@@ -25,7 +25,7 @@ export default async function AdminPayouts() {
 
   return (
     <>
-      <PageTitle>Çarşamba ödemeleri</PageTitle>
+      <PageTitle eyebrow="Hakediş">Çarşamba ödemeleri</PageTitle>
       <div className="card mb-6 space-y-3 text-sm">
         <p>
           Ödeme partisi her <strong>çarşamba 09:00</strong>&apos;da (İstanbul) otomatik oluşturulur: bakiyesi{" "}
@@ -33,7 +33,7 @@ export default async function AdminPayouts() {
           Gün içinde bankadan transferleri yapıp her birini &quot;Ödendi&quot; olarak işaretleyin. Başarısız transferler işletme
           bakiyesine geri döner ve sonraki çarşambaya kalır.
         </p>
-        <p className="text-gray-600">
+        <p className="text-ink-600">
           Sonraki ödeme günü: <strong>{formatDate(nextWednesday())}</strong> · IBAN&apos;lı işletmelerin toplam bakiyesi:{" "}
           <strong>{formatTL(eligible._sum.balance ?? 0)}</strong>
         </p>
@@ -54,10 +54,10 @@ export default async function AdminPayouts() {
           const pending = b.payouts.filter((p) => p.status === "PENDING");
           return (
             <section key={b.id} className="card p-0">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 p-4">
                 <div>
                   <h2 className="font-semibold">{formatDate(b.payoutDate)}</h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-ink-500">
                     {b.payouts.length} ödeme · {formatTL(b.totalAmount)} · {pending.length} bekliyor
                   </p>
                 </div>
@@ -72,16 +72,16 @@ export default async function AdminPayouts() {
                 <div className="overflow-x-auto">
                   <table className="table">
                     <thead><tr><th>İşletme</th><th>Hesap sahibi / IBAN</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody>
                       {b.payouts.map((p) => (
                         <tr key={p.id}>
-                          <td>{p.business.business?.companyName}<br /><span className="text-xs text-gray-500">{p.business.email}</span></td>
+                          <td>{p.business.business?.companyName}<br /><span className="text-xs text-ink-500">{p.business.email}</span></td>
                           <td>{p.ibanHolder}<br /><span className="font-mono text-xs">{formatIban(p.iban)}</span></td>
                           <td className="whitespace-nowrap font-semibold">{formatTL(p.amount)}</td>
                           <td>
                             <Badge status={p.status} />
-                            {p.paidAt && <p className="text-xs text-gray-500">{formatDateTime(p.paidAt)}</p>}
-                            {p.bankReference && <p className="text-xs text-gray-500">Dekont: {p.bankReference}</p>}
+                            {p.paidAt && <p className="text-xs text-ink-500">{formatDateTime(p.paidAt)}</p>}
+                            {p.bankReference && <p className="text-xs text-ink-500">Dekont: {p.bankReference}</p>}
                             {p.failReason && <p className="text-xs text-red-600">{p.failReason}</p>}
                           </td>
                           <td>

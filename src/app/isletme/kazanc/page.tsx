@@ -22,22 +22,25 @@ export default async function Earnings() {
 
   return (
     <>
-      <PageTitle>Kazanç & ödemeler</PageTitle>
+      <PageTitle eyebrow="Hakediş">Kazanç & ödemeler</PageTitle>
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Ödenecek kazanç" value={formatTL(user.balance)}
+        <Stat icon="IconWallet" accent="orange" label="Ödenecek kazanç" value={formatTL(user.balance)}
           hint={eligible ? `${formatDate(nextWednesday())} çarşamba günü IBAN'ına gönderilecek` :
             !hasIban ? "IBAN eklemeden ödeme yapılamaz" : `Asgari ödeme tutarı ${formatTL(settings.minPayout)}`} />
-        <Stat label="Devam eden siparişlerden" value={formatTL(inEscrow._sum.businessEarning ?? 0)} hint="Teslim onaylanınca bakiyene geçer" />
-        <Stat label="Ödeme hesabı" value={hasIban ? formatIban(user.business!.iban!).slice(0, 14) + "…" : "Yok"}
+        <Stat icon="IconNozzle" accent="pink" label="Devam eden siparişlerden" value={formatTL(inEscrow._sum.businessEarning ?? 0)} hint="Teslim onaylanınca bakiyene geçer" />
+        <Stat icon="IconBank" accent="cyan" label="Ödeme hesabı" value={hasIban ? formatIban(user.business!.iban!).slice(0, 14) + "…" : "Yok"}
           hint={hasIban ? user.business!.ibanHolder! : undefined} />
       </div>
       {!hasIban && (
         <p className="mb-6 text-sm"><Link href="/isletme/profil" className="link">IBAN ekle →</Link></p>
       )}
 
-      <div className="mb-8 rounded-lg bg-blue-50 p-4 text-sm text-blue-900">
-        Ödeme takvimi: Tamamlanan siparişlerin net kazancı bakiyene geçer. Her <strong>çarşamba</strong> sabahı bakiyesi{" "}
+      <div className="relative mb-8 overflow-hidden rounded-2xl bg-ink-900 p-5 text-sm text-ink-200">
+        <div className="bg-plate absolute inset-0" />
+        <p className="relative">
+        <strong className="text-white">Ödeme takvimi:</strong> Tamamlanan siparişlerin net kazancı bakiyene geçer. Her <strong className="text-filament-orange">çarşamba</strong> sabahı bakiyesi{" "}
         {formatTL(settings.minPayout)} ve üzeri olan işletmeler için ödeme oluşturulur ve gün içinde IBAN&apos;a gönderilir.
+        </p>
       </div>
 
       <h2 className="mb-2 text-lg font-semibold">Ödemeler</h2>
@@ -47,7 +50,7 @@ export default async function Earnings() {
         <div className="card mb-8 overflow-x-auto p-0">
           <table className="table">
             <thead><tr><th>Ödeme günü</th><th>Tutar</th><th>IBAN</th><th>Durum</th><th>Dekont</th><th>Ödenme</th></tr></thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {payouts.map((p) => (
                 <tr key={p.id}>
                   <td>{formatDate(p.batch.payoutDate)}</td>

@@ -21,7 +21,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageTitle>Kullanıcılar</PageTitle>
+      <PageTitle eyebrow="Yönetim">Kullanıcılar</PageTitle>
       <form className="mb-4 flex flex-wrap gap-2">
         <input className="input max-w-xs" name="q" placeholder="Ad, e-posta, işletme" defaultValue={q} />
         <select className="input max-w-[10rem]" name="rol" defaultValue={rol ?? ""}>
@@ -37,13 +37,13 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
           <details key={u.id} className="card">
             <summary className="flex cursor-pointer flex-wrap items-center gap-3">
               <span className="font-semibold">{u.business?.companyName ?? u.name}</span>
-              <span className="text-sm text-gray-500">{u.email}</span>
+              <span className="text-sm text-ink-500">{u.email}</span>
               <Badge status={u.role} />
               <Badge status={u.status} />
               {u.business?.verified && <span className="text-xs text-green-700">✓ Doğrulanmış</span>}
               <span className="ml-auto font-medium">{formatTL(u.balance)}</span>
             </summary>
-            <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 text-sm md:grid-cols-3">
+            <div className="mt-4 grid gap-4 border-t border-ink-100 pt-4 text-sm md:grid-cols-3">
               <div className="space-y-1">
                 <p>Ad: {u.name}</p>
                 <p>Telefon: {u.phone ?? "—"}</p>

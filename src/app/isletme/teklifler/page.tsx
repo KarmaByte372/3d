@@ -18,14 +18,14 @@ export default async function MyQuotes() {
   });
   return (
     <>
-      <PageTitle>Tekliflerim</PageTitle>
+      <PageTitle eyebrow="Atölye">Tekliflerim</PageTitle>
       {quotes.length === 0 ? (
         <Empty>Henüz teklif vermedin. <Link href="/isletme/talepler" className="link">Açık taleplere bak</Link>.</Empty>
       ) : (
         <div className="card overflow-x-auto p-0">
           <table className="table">
             <thead><tr><th>Talep</th><th>Fiyat</th><th>Teslim</th><th>Durum</th><th>Tarih</th><th></th></tr></thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {quotes.map((q) => (
                 <tr key={q.id}>
                   <td><Link href={`/isletme/talepler/${q.requestId}`} className="link">{q.request.title}</Link></td>

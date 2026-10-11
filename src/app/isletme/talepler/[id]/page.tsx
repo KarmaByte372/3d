@@ -4,7 +4,8 @@ import { Badge } from "@/components/Badge";
 import { PageTitle } from "@/components/Shell";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { formatDate, formatDateTime } from "@/lib/dates";
+import { formatDateTime } from "@/lib/dates";
+import { SpecSheet } from "@/components/Spec";
 import { formatBps, formatTL, splitCommission } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
 import { submitQuoteAction } from "../../actions";
@@ -28,27 +29,21 @@ export default async function BusinessRequestDetail({ params }: { params: Promis
 
   return (
     <>
-      <PageTitle action={<Badge status={request.status} />}>{request.title}</PageTitle>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="card space-y-2 text-sm">
-          <p className="whitespace-pre-wrap text-gray-700">{request.description}</p>
-          <dl className="grid grid-cols-2 gap-y-1 pt-2">
-            <dt className="text-gray-500">Teknoloji</dt><dd>{request.technology ?? "—"}</dd>
-            <dt className="text-gray-500">Malzeme</dt><dd>{request.material}</dd>
-            <dt className="text-gray-500">Renk</dt><dd>{request.color ?? "—"}</dd>
-            <dt className="text-gray-500">Adet</dt><dd>{request.quantity}</dd>
-            <dt className="text-gray-500">Şehir</dt><dd>{request.city}</dd>
-            <dt className="text-gray-500">Bütçe</dt><dd>{request.budget ? formatTL(request.budget) : "—"}</dd>
-            <dt className="text-gray-500">Son tarih</dt><dd>{formatDate(request.deadline)}</dd>
-            <dt className="text-gray-500">Yayın</dt><dd>{formatDateTime(request.createdAt)}</dd>
-            <dt className="text-gray-500">Teklif sayısı</dt><dd>{request._count.quotes} / {settings.maxQuotesPerRequest}</dd>
-          </dl>
-          {request.fileName && <a href={`/api/files/${request.id}`} className="link block pt-2">📎 {request.fileName}</a>}
+      <PageTitle eyebrow={`Açık talep · ${formatDateTime(request.createdAt)}`} action={<Badge status={request.status} />}>
+        {request.title}
+      </PageTitle>
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+        <div className="space-y-3">
+          <SpecSheet request={request} />
+          <p className="chip w-full justify-center font-mono">
+            {request._count.quotes} / {settings.maxQuotesPerRequest} teklif verildi
+          </p>
         </div>
 
-        <div className="card">
-          <h2 className="mb-1 font-semibold">{mine && mine.status !== "WITHDRAWN" ? "Teklifin" : "Teklif ver"}</h2>
-          <p className="mb-4 text-xs text-gray-500">
+        <div className="card h-fit p-6">
+          <p className="eyebrow mb-1">Teklifin</p>
+          <h2 className="mb-1 text-xl font-semibold">{mine && mine.status !== "WITHDRAWN" ? "Teklifin" : "Teklif ver"}</h2>
+          <p className="mb-5 rounded-xl bg-ink-50 p-3 text-xs text-ink-500">
             Teklif vermek ücretsiz. İş tamamlanınca {formatBps(settings.commissionBps)} komisyon kesilir
             (ör. {formatTL(100000)} teklifte eline {formatTL(example.earning)} geçer).
           </p>

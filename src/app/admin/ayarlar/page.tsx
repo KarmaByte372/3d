@@ -11,7 +11,7 @@ export default async function AdminSettings() {
   const ex = splitCommission(100000, s.commissionBps);
   return (
     <>
-      <PageTitle>Ayarlar</PageTitle>
+      <PageTitle eyebrow="Yönetim">Ayarlar</PageTitle>
       <div className="card max-w-3xl">
         <ActionForm action={updateSettingsAction} className="space-y-6">
           <fieldset className="space-y-3">
@@ -21,7 +21,7 @@ export default async function AdminSettings() {
               <input className="input" id="commissionPercent" name="commissionPercent" inputMode="decimal"
                 defaultValue={String(s.commissionBps / 100).replace(".", ",")} required />
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-ink-500">
               Şu anki oranla {formatTL(100000)} siparişte platform {formatTL(ex.commission)}, işletme {formatTL(ex.earning)} alır.
               Varsayılan %20, Armut&apos;un hizmet verenlerden fiilen kestiği orana dair tahmine dayanır. Değişiklik yalnızca yeni siparişlere uygulanır.
             </p>

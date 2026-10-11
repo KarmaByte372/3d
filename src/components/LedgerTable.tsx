@@ -11,7 +11,7 @@ export function LedgerTable({ entries }: { entries: Entry[] }) {
     <div className="card overflow-x-auto p-0">
       <table className="table">
         <thead><tr><th>Tarih</th><th>İşlem</th><th>Açıklama</th><th className="text-right">Tutar</th><th className="text-right">Bakiye</th></tr></thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody>
           {entries.map((e) => (
             <tr key={e.id}>
               <td className="whitespace-nowrap">{formatDateTime(e.createdAt)}</td>

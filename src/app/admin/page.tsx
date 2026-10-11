@@ -26,7 +26,7 @@ export default async function AdminHome() {
 
   return (
     <>
-      <PageTitle>Genel bakış</PageTitle>
+      <PageTitle eyebrow="Yönetim">Genel bakış</PageTitle>
       {isWednesday() && (pendingPayouts._count ?? 0) > 0 && (
         <div className="mb-5 rounded-lg border border-brand-500 bg-brand-50 p-4 text-sm">
           Bugün çarşamba: <strong>{pendingPayouts._count}</strong> ödeme ({formatTL(pendingPayouts._sum.amount ?? 0)}) gönderilmeyi bekliyor.{" "}
@@ -34,14 +34,14 @@ export default async function AdminHome() {
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Komisyon geliri (bu ay)" value={formatTL(commissionMonth._sum.amount ?? 0)} hint={`Oran: ${formatBps(settings.commissionBps)}`} />
-        <Stat label="Toplam komisyon geliri" value={formatTL(commissionAll._sum.amount ?? 0)} />
-        <Stat label="Tamamlanan işlem hacmi" value={formatTL(gmv._sum.amount ?? 0)} />
-        <Stat label="Emanetteki tutar" value={formatTL(escrow._sum.amount ?? 0)} hint={`${activeOrders} aktif sipariş`} />
-        <Stat label="İşletmelere borç (bakiye)" value={formatTL(owed._sum.balance ?? 0)} hint={`Sonraki ödeme: ${formatDate(nextWednesday())}`} />
-        <Stat label="Bekleyen ödemeler" value={formatTL(pendingPayouts._sum.amount ?? 0)} hint={`${pendingPayouts._count} transfer`} />
-        <Stat label="Onay bekleyen havale" value={String(pendingTopUps)} />
-        <Stat label="Kullanıcılar" value={`${customers} / ${businesses}`} hint="Müşteri / işletme" />
+        <Stat icon="IconChart" accent="orange" label="Komisyon geliri (bu ay)" value={formatTL(commissionMonth._sum.amount ?? 0)} hint={`Oran: ${formatBps(settings.commissionBps)}`} />
+        <Stat icon="IconLayers" accent="pink" label="Toplam komisyon geliri" value={formatTL(commissionAll._sum.amount ?? 0)} />
+        <Stat icon="IconBox" accent="cyan" label="Tamamlanan işlem hacmi" value={formatTL(gmv._sum.amount ?? 0)} />
+        <Stat icon="IconShield" accent="lime" label="Emanetteki tutar" value={formatTL(escrow._sum.amount ?? 0)} hint={`${activeOrders} aktif sipariş`} />
+        <Stat icon="IconWallet" accent="orange" label="İşletmelere borç (bakiye)" value={formatTL(owed._sum.balance ?? 0)} hint={`Sonraki ödeme: ${formatDate(nextWednesday())}`} />
+        <Stat icon="IconCalendar" accent="pink" label="Bekleyen ödemeler" value={formatTL(pendingPayouts._sum.amount ?? 0)} hint={`${pendingPayouts._count} transfer`} />
+        <Stat icon="IconBank" accent="cyan" label="Onay bekleyen havale" value={String(pendingTopUps)} />
+        <Stat icon="IconUsers" accent="lime" label="Kullanıcılar" value={`${customers} / ${businesses}`} hint="Müşteri / işletme" />
       </div>
     </>
   );

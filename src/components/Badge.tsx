@@ -1,27 +1,48 @@
-const LABELS: Record<string, [string, string]> = {
-  OPEN: ["Açık", "bg-blue-100 text-blue-800"],
-  ASSIGNED: ["Atandı", "bg-purple-100 text-purple-800"],
-  CANCELLED: ["İptal", "bg-gray-200 text-gray-700"],
-  PENDING: ["Bekliyor", "bg-yellow-100 text-yellow-800"],
-  ACCEPTED: ["Kabul edildi", "bg-green-100 text-green-800"],
-  REJECTED: ["Reddedildi", "bg-red-100 text-red-800"],
-  WITHDRAWN: ["Geri çekildi", "bg-gray-200 text-gray-700"],
-  IN_PROGRESS: ["Hazırlanıyor", "bg-blue-100 text-blue-800"],
-  SHIPPED: ["Kargoda", "bg-indigo-100 text-indigo-800"],
-  COMPLETED: ["Tamamlandı", "bg-green-100 text-green-800"],
-  APPROVED: ["Onaylandı", "bg-green-100 text-green-800"],
-  PAID: ["Ödendi", "bg-green-100 text-green-800"],
-  FAILED: ["Başarısız", "bg-red-100 text-red-800"],
-  ACTIVE: ["Aktif", "bg-green-100 text-green-800"],
-  SUSPENDED: ["Askıda", "bg-red-100 text-red-800"],
-  CUSTOMER: ["Müşteri", "bg-sky-100 text-sky-800"],
-  BUSINESS: ["İşletme", "bg-orange-100 text-orange-800"],
-  ADMIN: ["Admin", "bg-gray-800 text-white"],
+const TONES = {
+  blue: "bg-sky-50 text-sky-700 ring-sky-200 [--dot:theme(colors.sky.500)]",
+  violet: "bg-violet-50 text-violet-700 ring-violet-200 [--dot:theme(colors.violet.500)]",
+  gray: "bg-ink-50 text-ink-500 ring-ink-200 [--dot:theme(colors.ink.400)]",
+  amber: "bg-amber-50 text-amber-700 ring-amber-200 [--dot:theme(colors.amber.500)]",
+  green: "bg-emerald-50 text-emerald-700 ring-emerald-200 [--dot:theme(colors.emerald.500)]",
+  red: "bg-red-50 text-red-700 ring-red-200 [--dot:theme(colors.red.500)]",
+  orange: "bg-brand-50 text-brand-700 ring-brand-200 [--dot:theme(colors.brand.500)]",
+  dark: "bg-ink-900 text-white ring-ink-900 [--dot:theme(colors.filament.orange)]",
+} as const;
+
+const LABELS: Record<string, [string, keyof typeof TONES, boolean?]> = {
+  OPEN: ["Teklif alıyor", "blue", true],
+  ASSIGNED: ["Atandı", "violet"],
+  CANCELLED: ["İptal", "gray"],
+  PENDING: ["Bekliyor", "amber", true],
+  ACCEPTED: ["Kabul edildi", "green"],
+  REJECTED: ["Reddedildi", "red"],
+  WITHDRAWN: ["Geri çekildi", "gray"],
+  IN_PROGRESS: ["Basılıyor", "orange", true],
+  SHIPPED: ["Kargoda", "violet", true],
+  COMPLETED: ["Tamamlandı", "green"],
+  APPROVED: ["Onaylandı", "green"],
+  PAID: ["Ödendi", "green"],
+  FAILED: ["Başarısız", "red"],
+  ACTIVE: ["Aktif", "green"],
+  SUSPENDED: ["Askıda", "red"],
+  CUSTOMER: ["Müşteri", "blue"],
+  BUSINESS: ["İşletme", "orange"],
+  ADMIN: ["Admin", "dark"],
 };
 
 export function Badge({ status }: { status: string }) {
-  const [label, cls] = LABELS[status] ?? [status, "bg-gray-100 text-gray-700"];
-  return <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
+  const [label, tone, live] = LABELS[status] ?? [status, "gray"];
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONES[tone]}`}
+    >
+      <span className="relative flex h-1.5 w-1.5">
+        {live && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--dot)] opacity-60" />}
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--dot)]" />
+      </span>
+      {label}
+    </span>
+  );
 }
 
 export const LEDGER_LABELS: Record<string, string> = {
