@@ -1,0 +1,204 @@
+// Tüm para tutarları kuruş cinsinden tamsayı (Int) olarak tutulur: 1 TL = 100.
+// Oranlar baz puan (bps) cinsindendir: %20 = 2000.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  /// CUSTOMER | BUSINESS | ADMIN
+  role         String
+  /// ACTIVE | SUSPENDED
+  status       String   @default("ACTIVE")
+  /// Müşteri için harcanabilir bakiye, işletme için ödenmeyi bekleyen kazanç (kuruş)
+  balance      Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  business       BusinessProfile?
+  requests       PrintRequest[]   @relation("CustomerRequests")
+  quotes         Quote[]          @relation("BusinessQuotes")
+  customerOrders Order[]          @relation("CustomerOrders")
+  businessOrders Order[]          @relation("BusinessOrders")
+  topUps         TopUp[]
+  ledger         LedgerEntry[]
+  payouts        Payout[]
+}
+
+model BusinessProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  taxNumber   String?
+  city        String
+  description String   @default("")
+  /// Virgülle ayrılmış: FDM, SLA, SLS ...
+  technologies String  @default("")
+  /// Virgülle ayrılmış: PLA, PETG, ABS, Reçine ...
+  materials   String   @default("")
+  iban        String?
+  ibanHolder  String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model PrintRequest {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    User     @relation("CustomerRequests", fields: [customerId], references: [id])
+  title       String
+  description String
+  technology  String?
+  material    String
+  color       String?
+  quantity    Int      @default(1)
+  /// Müşterinin tahmini bütçesi (kuruş), opsiyonel
+  budget      Int?
+  city        String
+  deadline    DateTime?
+  fileName    String?
+  filePath    String?
+  /// OPEN | ASSIGNED | CANCELLED
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+
+  quotes Quote[]
+  order  Order?
+}
+
+model Quote {
+  id           String       @id @default(cuid())
+  requestId    String
+  request      PrintRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  businessId   String
+  business     User         @relation("BusinessQuotes", fields: [businessId], references: [id])
+  price        Int
+  deliveryDays Int
+  message      String       @default("")
+  /// PENDING | ACCEPTED | REJECTED | WITHDRAWN
+  status       String       @default("PENDING")
+  createdAt    DateTime     @default(now())
+
+  order Order?
+
+  @@unique([requestId, businessId])
+}
+
+model Order {
+  id               String       @id @default(cuid())
+  requestId        String       @unique
+  request          PrintRequest @relation(fields: [requestId], references: [id])
+  quoteId          String       @unique
+  quote            Quote        @relation(fields: [quoteId], references: [id])
+  customerId       String
+  customer         User         @relation("CustomerOrders", fields: [customerId], references: [id])
+  businessId       String
+  business         User         @relation("BusinessOrders", fields: [businessId], references: [id])
+  /// Müşterinin ödediği toplam tutar (kuruş) — sipariş boyunca emanette tutulur
+  amount           Int
+  /// Sipariş anındaki komisyon oranı (bps) — sonradan ayar değişse de sabit kalır
+  commissionBps    Int
+  commissionAmount Int
+  businessEarning  Int
+  /// IN_PROGRESS | SHIPPED | COMPLETED | CANCELLED
+  status           String       @default("IN_PROGRESS")
+  trackingInfo     String?
+  cancelReason     String?
+  createdAt        DateTime     @default(now())
+  shippedAt        DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+
+  ledger LedgerEntry[]
+}
+
+model TopUp {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  amount      Int
+  /// CARD | BANK_TRANSFER
+  method      String
+  /// PENDING | APPROVED | REJECTED
+  status      String    @default("PENDING")
+  /// Havale açıklamasına yazılacak kod veya ödeme sağlayıcı işlem numarası
+  reference   String    @unique
+  adminNote   String?
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  ledger LedgerEntry[]
+}
+
+/// Bakiye hareketleri defteri. userId boşsa platform hesabıdır (komisyon geliri).
+model LedgerEntry {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  /// TOPUP | ORDER_HOLD | ORDER_REFUND | EARNING | COMMISSION | PAYOUT | PAYOUT_REVERSAL | ADJUSTMENT
+  type         String
+  /// İşaretli tutar: + giriş, - çıkış (kuruş)
+  amount       Int
+  balanceAfter Int?
+  description  String
+  orderId      String?
+  order        Order?   @relation(fields: [orderId], references: [id])
+  topUpId      String?
+  topUp        TopUp?   @relation(fields: [topUpId], references: [id])
+  payoutId     String?
+  payout       Payout?  @relation(fields: [payoutId], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+/// Her çarşamba oluşturulan haftalık ödeme partisi.
+model PayoutBatch {
+  id          String   @id @default(cuid())
+  /// Ödeme gününün tarihi (YYYY-MM-DD, İstanbul saatiyle). Aynı çarşamba için ikinci parti oluşmaz.
+  payoutDate  String   @unique
+  totalAmount Int      @default(0)
+  /// OPEN | COMPLETED
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+
+  payouts Payout[]
+}
+
+model Payout {
+  id         String      @id @default(cuid())
+  batchId    String
+  batch      PayoutBatch @relation(fields: [batchId], references: [id])
+  businessId String
+  business   User        @relation(fields: [businessId], references: [id])
+  amount     Int
+  iban       String
+  ibanHolder String
+  /// PENDING | PAID | FAILED
+  status     String      @default("PENDING")
+  /// Banka dekont/işlem numarası
+  bankReference String?
+  failReason String?
+  paidAt     DateTime?
+  createdAt  DateTime    @default(now())
+
+  ledger LedgerEntry[]
+
+  @@unique([batchId, businessId])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
