@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionState } from "@/lib/errors";
 
@@ -9,13 +9,22 @@ type Props = {
   children: React.ReactNode;
   className?: string;
   confirm?: string;
+  /** Başarılı gönderimden sonra formu temizle (ör. mesaj kutusu) */
+  resetOnSuccess?: boolean;
 };
 
 /** Sunucu eylemini çalıştırıp hata/başarı mesajını gösteren form. */
-export function ActionForm({ action, children, className, confirm }: Props) {
-  const [state, formAction] = useActionState(action, {});
+export function ActionForm({ action, children, className, confirm, resetOnSuccess }: Props) {
+  const [state, formAction, pending] = useActionState(action, {});
+  const ref = useRef<HTMLFormElement>(null);
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !pending && !state.error && resetOnSuccess) ref.current?.reset();
+    wasPending.current = pending;
+  }, [pending, state, resetOnSuccess]);
   return (
     <form
+      ref={ref}
       action={formAction}
       className={className}
       onSubmit={(e) => {

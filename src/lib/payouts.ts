@@ -3,6 +3,8 @@ import { AppError } from "./errors";
 import { getSettings } from "./settings";
 import { istanbulDate } from "./dates";
 import { changeBalance } from "./wallet";
+import { notify } from "./notifications";
+import { formatTL } from "./money";
 
 /**
  * Çarşamba ödeme partisini oluşturur. Asgari tutarı aşan ve IBAN'ı kayıtlı her aktif işletmenin
@@ -54,6 +56,10 @@ export async function createPayoutBatch(now = new Date()) {
           where: { id: batch.id },
           data: { totalAmount: { increment: fresh.balance } },
         });
+        await notify(tx, b.id, {
+          title: `${formatTL(fresh.balance)} bugün IBAN'ına gönderilecek`,
+          href: "/isletme/kazanc",
+        });
         created++;
       });
     } catch (e) {
@@ -76,6 +82,8 @@ export async function markPayoutPaid(payoutId: string, bankReference: string) {
     data: { status: "PAID", bankReference: bankReference || null, paidAt: new Date() },
   });
   if (res.count === 0) throw new AppError("Ödeme güncellenemedi.");
+  const p = await prisma.payout.findUniqueOrThrow({ where: { id: payoutId } });
+  await notify(prisma, p.businessId, { title: `${formatTL(p.amount)} hesabına gönderildi`, href: "/isletme/kazanc" });
   await closeBatchIfDone(payoutId);
 }
 
@@ -97,6 +105,11 @@ export async function markPayoutFailed(payoutId: string, reason: string) {
     await tx.payoutBatch.update({
       where: { id: payout.batchId },
       data: { totalAmount: { decrement: payout.amount } },
+    });
+    await notify(tx, payout.businessId, {
+      title: "Ödeme gönderilemedi, tutar bakiyene iade edildi",
+      body: `${reason || "Belirtilmedi"} · IBAN bilgini kontrol et`,
+      href: "/isletme/profil",
     });
   });
   await closeBatchIfDone(payoutId);

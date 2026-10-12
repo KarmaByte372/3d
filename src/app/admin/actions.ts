@@ -1,8 +1,11 @@
 "use server";
 
+import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { hashPassword, requireUser } from "@/lib/auth";
+import { adminResetPassword } from "@/lib/account";
+import { markWithdrawalPaid, rejectWithdrawal } from "@/lib/withdrawals";
 import { AppError, toActionError, type ActionState } from "@/lib/errors";
 import { cancelOrder, completeOrder } from "@/lib/marketplace";
 import { parseTL } from "@/lib/money";
@@ -171,6 +174,54 @@ export async function updateSettingsAction(_: ActionState, f: FormData): Promise
     });
     revalidatePath("/", "layout");
     return { ok: "Ayarlar kaydedildi. Yeni komisyon oranı bundan sonra kabul edilen siparişlere uygulanır." };
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function resetUserPasswordAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    const a = await admin();
+    const userId = String(f.get("userId"));
+    if (userId === a.id) throw new AppError("Kendi şifrenizi Hesabım sayfasından değiştirin.");
+    const temp = await adminResetPassword(userId);
+    return { ok: `Geçici şifre: ${temp}. Kullanıcıya güvenli bir kanaldan iletin; tüm oturumları kapatıldı.` };
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function createAdminAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const email = String(f.get("email") ?? "").trim().toLowerCase();
+    const name = String(f.get("name") ?? "").trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new AppError("Geçerli bir e-posta girin.");
+    if (name.length < 2) throw new AppError("Ad soyad girin.");
+    if (await prisma.user.findUnique({ where: { email } })) throw new AppError("Bu e-posta zaten kayıtlı.");
+    const temp = crypto.randomBytes(9).toString("base64url");
+    await prisma.user.create({ data: { email, name, role: "ADMIN", passwordHash: await hashPassword(temp) } });
+    return done("/admin/kullanicilar", `Yönetici oluşturuldu. Geçici şifre: ${temp} (ilk girişte Hesabım'dan değiştirilmeli)`);
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function withdrawalPaidAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    await markWithdrawalPaid(String(f.get("id")), String(f.get("bankReference") ?? "").trim().slice(0, 100));
+    return done("/admin/cekimler", "Ödendi olarak işaretlendi.");
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function withdrawalRejectAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    await rejectWithdrawal(String(f.get("id")), String(f.get("note") ?? "").trim().slice(0, 300));
+    return done("/admin/cekimler", "Reddedildi, tutar kullanıcının bakiyesine iade edildi.");
   } catch (e) {
     return toActionError(e);
   }

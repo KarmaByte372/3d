@@ -9,7 +9,8 @@ import { formatDateTime } from "@/lib/dates";
 import { formatTL } from "@/lib/money";
 import { getPaymentProvider } from "@/lib/payments";
 import { getSettings } from "@/lib/settings";
-import { bankTopUpAction, cardTopUpAction } from "../actions";
+import { bankTopUpAction, cardTopUpAction, withdrawAction } from "../actions";
+import { formatIban } from "@/lib/iban";
 
 export default async function BalancePage() {
   const user = await requireUser("CUSTOMER");
@@ -19,6 +20,7 @@ export default async function BalancePage() {
     prisma.ledgerEntry.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 50 }),
     prisma.order.aggregate({ where: { customerId: user.id, status: { in: ["IN_PROGRESS", "SHIPPED"] } }, _sum: { amount: true } }),
   ]);
+  const withdrawals = await prisma.withdrawal.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 10 });
   const cardEnabled = !!getPaymentProvider();
   const limits = `${formatTL(settings.minTopUp)} – ${formatTL(settings.maxTopUp)}`;
 
@@ -56,6 +58,44 @@ export default async function BalancePage() {
           </ActionForm>
         </div>
       </div>
+
+      <details className="card mb-8">
+        <summary className="flex cursor-pointer items-center gap-2 font-semibold"><IconBank className="h-5 w-5 text-brand-600" /> Bakiyemi hesabıma çek</summary>
+        <p className="mt-2 text-sm text-ink-500">Kullanmadığın bakiyeyi (ör. iade edilen tutarlar) kendi IBAN&apos;ına çekebilirsin. Tutar talep anında bakiyenden ayrılır, onaydan sonra gönderilir.</p>
+        <ActionForm action={withdrawAction} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="label" htmlFor="w-amount">Tutar (TL)</label>
+            <input className="input" id="w-amount" name="amount" inputMode="decimal" required />
+          </div>
+          <div>
+            <label className="label" htmlFor="w-holder">Hesap sahibi</label>
+            <input className="input" id="w-holder" name="ibanHolder" defaultValue={user.name} required />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="label" htmlFor="w-iban">IBAN</label>
+            <input className="input font-mono" id="w-iban" name="iban" placeholder="TR00 0000 …" required />
+          </div>
+          <div><SubmitButton className="btn-dark">Çekim talebi oluştur</SubmitButton></div>
+        </ActionForm>
+        {withdrawals.length > 0 && (
+          <div className="mt-5 overflow-x-auto rounded-xl border border-ink-100">
+            <table className="table">
+              <thead><tr><th>Tarih</th><th>Tutar</th><th>IBAN</th><th>Durum</th><th>Not</th></tr></thead>
+              <tbody>
+                {withdrawals.map((w) => (
+                  <tr key={w.id}>
+                    <td>{formatDateTime(w.createdAt)}</td>
+                    <td>{formatTL(w.amount)}</td>
+                    <td className="font-mono text-xs">{formatIban(w.iban)}</td>
+                    <td><Badge status={w.status} /></td>
+                    <td>{w.adminNote ?? w.bankReference ?? ""}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </details>
 
       {topUps.length > 0 && (
         <>

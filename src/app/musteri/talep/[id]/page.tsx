@@ -10,6 +10,8 @@ import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/dates";
 import { formatTL } from "@/lib/money";
 import { acceptQuoteAction, cancelRequestAction } from "../../actions";
+import { ratingsFor } from "@/lib/marketplace";
+import { RatingInline } from "@/components/Stars";
 
 export default async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,6 +27,7 @@ export default async function RequestDetail({ params }: { params: Promise<{ id: 
     },
   });
   if (!request) notFound();
+  const ratings = await ratingsFor(request.quotes.map((q) => q.businessId));
   const open = request.status === "OPEN";
   const cheapest = request.quotes.find((q) => q.status === "PENDING")?.id;
 
@@ -76,7 +79,7 @@ export default async function RequestDetail({ params }: { params: Promise<{ id: 
                     </span>
                     <div>
                       <p className="flex items-center gap-1.5 font-semibold">
-                        {name}
+                        <Link href={`/atolye/${q.businessId}`} className="hover:text-brand-600" target="_blank">{name}</Link>
                         {b?.verified && (
                           <span title="Doğrulanmış atölye" className="grid h-4 w-4 place-items-center rounded-full bg-emerald-500 text-white">
                             <IconCheck className="h-3 w-3" />
@@ -86,6 +89,7 @@ export default async function RequestDetail({ params }: { params: Promise<{ id: 
                       <p className="flex items-center gap-1 text-xs text-ink-500">
                         <IconPin className="h-3.5 w-3.5" /> {b?.city} {b?.technologies && <>· {b.technologies}</>}
                       </p>
+                      <RatingInline rating={ratings.get(q.businessId)} />
                     </div>
                   </div>
                   <div className="text-right">

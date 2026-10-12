@@ -54,4 +54,6 @@ export const LEDGER_LABELS: Record<string, string> = {
   PAYOUT: "Haftalık ödeme",
   PAYOUT_REVERSAL: "Ödeme iadesi",
   ADJUSTMENT: "Düzeltme",
+  WITHDRAWAL: "Para çekme",
+  WITHDRAWAL_REVERSAL: "Çekim iadesi",
 };

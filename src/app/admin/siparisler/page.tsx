@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { Badge } from "@/components/Badge";
 import { Empty, PageTitle } from "@/components/Shell";
@@ -9,7 +10,12 @@ import { adminCancelOrderAction, adminCompleteOrderAction } from "../actions";
 export default async function AdminOrders({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {
   const { durum } = await searchParams;
   const orders = await prisma.order.findMany({
-    where: durum ? { status: durum } : {},
+    where:
+      durum === "DISPUTED"
+        ? { disputed: true, status: { in: ["IN_PROGRESS", "SHIPPED"] } }
+        : durum
+          ? { status: durum }
+          : {},
     orderBy: { createdAt: "desc" },
     take: 100,
     include: { request: true, customer: true, business: { include: { business: true } } },
@@ -24,6 +30,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
           <option value="SHIPPED">Kargoda</option>
           <option value="COMPLETED">Tamamlandı</option>
           <option value="CANCELLED">İptal</option>
+          <option value="DISPUTED">Anlaşmazlık var</option>
         </select>
         <button className="btn-secondary">Filtrele</button>
       </form>
@@ -33,7 +40,8 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
           <div key={o.id} className="card text-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-base font-semibold">{o.request.title}</p>
+                <Link href={`/admin/siparisler/${o.id}`} className="text-base font-semibold hover:text-brand-600">{o.request.title} →</Link>
+                {o.disputed && (o.status === "IN_PROGRESS" || o.status === "SHIPPED") && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Anlaşmazlık</span>}
                 <p className="text-ink-500">
                   Müşteri: {o.customer.email} · İşletme: {o.business.business?.companyName} ({o.business.email})
                 </p>

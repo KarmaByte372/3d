@@ -1,6 +1,7 @@
 import { logoutAction } from "@/app/actions";
 import { formatTL } from "@/lib/money";
-import { IconLogout, IconWallet } from "./Icons";
+import Link from "next/link";
+import { IconBell, IconLogout, IconWallet } from "./Icons";
 import { Logo } from "./Logo";
 import { NavLinks, type NavItem } from "./NavLinks";
 import * as Icons from "./Icons";
@@ -11,8 +12,12 @@ export function Shell({
   user,
   showBalance,
   balanceLabel = "Bakiye",
+  base,
+  unread = 0,
   children,
 }: {
+  base: string;
+  unread?: number;
   title: string;
   nav: NavItem[];
   user: { name: string; balance: number };
@@ -46,12 +51,25 @@ export function Shell({
                   <span className="font-mono text-sm font-semibold text-white">{formatTL(user.balance)}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
+              <Link
+                href={`${base}/bildirimler`}
+                className="relative grid h-8 w-8 place-items-center rounded-lg text-ink-300 transition hover:bg-white/10 hover:text-white"
+                title="Bildirimler"
+                aria-label={unread ? `${unread} okunmamış bildirim` : "Bildirimler"}
+              >
+                <IconBell className="h-4 w-4" />
+                {unread > 0 && (
+                  <span className="absolute -right-1 -top-1 grid min-w-[18px] place-items-center rounded-full bg-filament-pink px-1 font-mono text-[10px] font-bold leading-[18px] text-white">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </Link>
+              <Link href={`${base}/hesap`} className="flex items-center gap-2 rounded-lg p-0.5 transition hover:bg-white/10" title="Hesabım">
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-filament-orange to-filament-pink text-xs font-bold text-white">
                   {initials}
                 </span>
-                <span className="hidden text-sm text-ink-200 md:inline">{user.name}</span>
-              </div>
+                <span className="hidden pr-2 text-sm text-ink-200 md:inline">{user.name}</span>
+              </Link>
               <form action={logoutAction}>
                 <button
                   className="grid h-8 w-8 place-items-center rounded-lg text-ink-300 transition hover:bg-white/10 hover:text-white"

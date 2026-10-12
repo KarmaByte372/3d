@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { Badge } from "@/components/Badge";
 import { OrderProgress } from "@/components/OrderProgress";
@@ -28,7 +29,7 @@ export default async function CustomerOrders() {
           <div key={o.id} className="card">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-lg font-semibold">{o.request.title}</p>
+                <Link href={`/musteri/siparisler/${o.id}`} className="text-lg font-semibold hover:text-brand-600">{o.request.title} →</Link>
                 <p className="text-sm text-ink-500">
                   {o.business.business?.companyName ?? o.business.name} · {formatDateTime(o.createdAt)}
                 </p>

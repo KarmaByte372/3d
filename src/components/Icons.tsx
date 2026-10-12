@@ -86,3 +86,15 @@ export const IconCheck = ({ className }: P) => (
 export const IconLogout = ({ className }: P) => (
   <svg {...base(className)}><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14" /><path d="M10 16.5 5.5 12 10 7.5M5.5 12H15" /></svg>
 );
+export const IconBell = ({ className }: P) => (
+  <svg {...base(className)}><path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
+);
+export const IconMessage = ({ className }: P) => (
+  <svg {...base(className)}><path d="M4 5h16v11H9l-5 4Z" /></svg>
+);
+export const IconStar = ({ className }: P) => (
+  <svg {...base(className)}><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z" /></svg>
+);
+export const IconAlert = ({ className }: P) => (
+  <svg {...base(className)}><path d="M12 3.5 21 19.5H3Z" /><path d="M12 10v4M12 16.8v.2" /></svg>
+);

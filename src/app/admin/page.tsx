@@ -23,6 +23,10 @@ export default async function AdminHome() {
       prisma.payout.aggregate({ where: { status: "PENDING" }, _sum: { amount: true }, _count: true }),
       prisma.order.aggregate({ where: { status: "COMPLETED" }, _sum: { amount: true } }),
     ]);
+  const [disputes, pendingWithdrawals] = await Promise.all([
+    prisma.order.count({ where: { disputed: true, status: { in: ["IN_PROGRESS", "SHIPPED"] } } }),
+    prisma.withdrawal.count({ where: { status: "PENDING" } }),
+  ]);
 
   return (
     <>
@@ -31,6 +35,13 @@ export default async function AdminHome() {
         <div className="mb-5 rounded-lg border border-brand-500 bg-brand-50 p-4 text-sm">
           Bugün çarşamba: <strong>{pendingPayouts._count}</strong> ödeme ({formatTL(pendingPayouts._sum.amount ?? 0)}) gönderilmeyi bekliyor.{" "}
           <Link href="/admin/odemeler" className="link">Ödemelere git →</Link>
+        </div>
+      )}
+      {(disputes > 0 || pendingWithdrawals > 0 || pendingTopUps > 0) && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {disputes > 0 && <Link href="/admin/siparisler?durum=DISPUTED" className="chip border-amber-300 bg-amber-50 text-amber-800">⚠ {disputes} anlaşmazlık bekliyor</Link>}
+          {pendingTopUps > 0 && <Link href="/admin/yuklemeler" className="chip">{pendingTopUps} havale onayı</Link>}
+          {pendingWithdrawals > 0 && <Link href="/admin/cekimler" className="chip">{pendingWithdrawals} para çekme talebi</Link>}
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -1,11 +1,15 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { endSession, hashPassword, startSession, verifyPassword } from "@/lib/auth";
 import { HOME_BY_ROLE } from "@/lib/session";
 import type { ActionState } from "@/lib/errors";
+import { hit, isLimited, minutesLeft, reset } from "@/lib/rate-limit";
+import { validateNewPassword } from "@/lib/account";
+import { AppError } from "@/lib/errors";
 
 export async function logoutAction() {
   await endSession();
@@ -21,9 +25,24 @@ function safeNext(next: FormDataEntryValue | null, role: string) {
 export async function loginAction(_: ActionState, formData: FormData): Promise<ActionState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+
+  // Kaba kuvvet denemelerine karşı: hesap başına 15 dakikada 5, IP başına 30 hatalı deneme
+  const h = await headers();
+  const ip = h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "yerel";
+  const WINDOW = 15 * 60 * 1000;
+  const keys = [`email:${email}`, `ip:${ip}`];
+  if (isLimited(keys[0], 5, WINDOW) || isLimited(keys[1], 30, WINDOW)) {
+    const wait = Math.max(minutesLeft(keys[0]), minutesLeft(keys[1]));
+    return { error: `Çok fazla hatalı deneme. ${wait} dakika sonra tekrar deneyin.` };
+  }
+
   const user = await prisma.user.findUnique({ where: { email } });
   const ok = await verifyPassword(password, user?.passwordHash);
-  if (!user || !ok) return { error: "E-posta veya şifre hatalı." };
+  if (!user || !ok) {
+    keys.forEach((k) => hit(k, WINDOW));
+    return { error: "E-posta veya şifre hatalı." };
+  }
+  reset(keys[0]);
   if (user.status !== "ACTIVE") return { error: "Hesabınız askıya alınmış. Destek ile iletişime geçin." };
   await startSession(user);
   redirect(safeNext(formData.get("next"), user.role));
@@ -49,6 +68,11 @@ export async function registerAction(_: ActionState, formData: FormData): Promis
   const parsed = registerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
+  try {
+    validateNewPassword(d.password);
+  } catch (e) {
+    return { error: e instanceof AppError ? e.message : "Geçersiz şifre." };
+  }
 
   if (await prisma.user.findUnique({ where: { email: d.email } })) {
     return { error: "Bu e-posta ile kayıtlı bir hesap var." };

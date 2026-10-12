@@ -21,8 +21,8 @@ export async function verifyPassword(password: string, hash: string | undefined)
   return bcrypt.compare(password, hash);
 }
 
-export async function startSession(user: { id: string; role: string }) {
-  const token = await signSession({ sub: user.id, role: user.role });
+export async function startSession(user: { id: string; role: string; sessionVersion: number }) {
+  const token = await signSession({ sub: user.id, role: user.role, ver: user.sessionVersion });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     // HTTPS yokken (ör. yalnızca IP ile erişim) COOKIE_SECURE="false" verilmeli, yoksa tarayıcı çerezi kaydetmez
@@ -42,7 +42,14 @@ export async function getCurrentUser() {
   const session = await verifySession((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) return null;
   const user = await prisma.user.findUnique({ where: { id: session.sub }, include: { business: true } });
-  if (!user || user.status !== "ACTIVE") return null;
+  // Şifre değiştiyse ya da admin sıfırladıysa eski oturumlar geçersizdir
+  if (!user || user.status !== "ACTIVE" || user.sessionVersion !== session.ver) return null;
+  return user;
+}
+
+export async function requireAnyUser() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/giris");
   return user;
 }
 

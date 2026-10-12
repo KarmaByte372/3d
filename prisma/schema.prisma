@@ -11,18 +11,20 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  phone        String?
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String?
   /// CUSTOMER | BUSINESS | ADMIN
-  role         String
+  role           String
   /// ACTIVE | SUSPENDED
-  status       String   @default("ACTIVE")
+  status         String   @default("ACTIVE")
   /// Müşteri için harcanabilir bakiye, işletme için ödenmeyi bekleyen kazanç (kuruş)
-  balance      Int      @default(0)
-  createdAt    DateTime @default(now())
+  balance        Int      @default(0)
+  /// Şifre değişince/sıfırlanınca artar; eski oturumlar geçersiz olur
+  sessionVersion Int      @default(0)
+  createdAt      DateTime @default(now())
 
   business       BusinessProfile?
   requests       PrintRequest[]   @relation("CustomerRequests")
@@ -32,36 +34,41 @@ model User {
   topUps         TopUp[]
   ledger         LedgerEntry[]
   payouts        Payout[]
+  notifications  Notification[]
+  messages       Message[]
+  reviewsGiven   Review[]         @relation("CustomerReviews")
+  reviewsGot     Review[]         @relation("BusinessReviews")
+  withdrawals    Withdrawal[]
 }
 
 model BusinessProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyName String
-  taxNumber   String?
-  city        String
-  description String   @default("")
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName  String
+  taxNumber    String?
+  city         String
+  description  String   @default("")
   /// Virgülle ayrılmış: FDM, SLA, SLS ...
-  technologies String  @default("")
+  technologies String   @default("")
   /// Virgülle ayrılmış: PLA, PETG, ABS, Reçine ...
-  materials   String   @default("")
-  iban        String?
-  ibanHolder  String?
-  verified    Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  materials    String   @default("")
+  iban         String?
+  ibanHolder   String?
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }
 
 model PrintRequest {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   customerId  String
-  customer    User     @relation("CustomerRequests", fields: [customerId], references: [id])
+  customer    User      @relation("CustomerRequests", fields: [customerId], references: [id])
   title       String
   description String
   technology  String?
   material    String
   color       String?
-  quantity    Int      @default(1)
+  quantity    Int       @default(1)
   /// Müşterinin tahmini bütçesi (kuruş), opsiyonel
   budget      Int?
   city        String
@@ -69,8 +76,8 @@ model PrintRequest {
   fileName    String?
   filePath    String?
   /// OPEN | ASSIGNED | CANCELLED
-  status      String   @default("OPEN")
-  createdAt   DateTime @default(now())
+  status      String    @default("OPEN")
+  createdAt   DateTime  @default(now())
 
   quotes Quote[]
   order  Order?
@@ -118,8 +125,14 @@ model Order {
   shippedAt        DateTime?
   completedAt      DateTime?
   cancelledAt      DateTime?
+  /// Müşteri sorun bildirdiyse otomatik onay durur, admin karar verir
+  disputed         Boolean      @default(false)
+  disputeReason    String?
+  disputedAt       DateTime?
 
-  ledger LedgerEntry[]
+  ledger   LedgerEntry[]
+  messages Message[]
+  review   Review?
 }
 
 model TopUp {
@@ -142,22 +155,24 @@ model TopUp {
 
 /// Bakiye hareketleri defteri. userId boşsa platform hesabıdır (komisyon geliri).
 model LedgerEntry {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   userId       String?
-  user         User?    @relation(fields: [userId], references: [id])
-  /// TOPUP | ORDER_HOLD | ORDER_REFUND | EARNING | COMMISSION | PAYOUT | PAYOUT_REVERSAL | ADJUSTMENT
+  user         User?       @relation(fields: [userId], references: [id])
+  /// TOPUP | ORDER_HOLD | ORDER_REFUND | EARNING | COMMISSION | PAYOUT | PAYOUT_REVERSAL | ADJUSTMENT | WITHDRAWAL | WITHDRAWAL_REVERSAL
   type         String
   /// İşaretli tutar: + giriş, - çıkış (kuruş)
   amount       Int
   balanceAfter Int?
   description  String
   orderId      String?
-  order        Order?   @relation(fields: [orderId], references: [id])
+  order        Order?      @relation(fields: [orderId], references: [id])
   topUpId      String?
-  topUp        TopUp?   @relation(fields: [topUpId], references: [id])
+  topUp        TopUp?      @relation(fields: [topUpId], references: [id])
   payoutId     String?
-  payout       Payout?  @relation(fields: [payoutId], references: [id])
-  createdAt    DateTime @default(now())
+  payout       Payout?     @relation(fields: [payoutId], references: [id])
+  withdrawalId String?
+  withdrawal   Withdrawal? @relation(fields: [withdrawalId], references: [id])
+  createdAt    DateTime    @default(now())
 
   @@index([userId, createdAt])
   @@index([type])
@@ -177,21 +192,21 @@ model PayoutBatch {
 }
 
 model Payout {
-  id         String      @id @default(cuid())
-  batchId    String
-  batch      PayoutBatch @relation(fields: [batchId], references: [id])
-  businessId String
-  business   User        @relation(fields: [businessId], references: [id])
-  amount     Int
-  iban       String
-  ibanHolder String
+  id            String      @id @default(cuid())
+  batchId       String
+  batch         PayoutBatch @relation(fields: [batchId], references: [id])
+  businessId    String
+  business      User        @relation(fields: [businessId], references: [id])
+  amount        Int
+  iban          String
+  ibanHolder    String
   /// PENDING | PAID | FAILED
-  status     String      @default("PENDING")
+  status        String      @default("PENDING")
   /// Banka dekont/işlem numarası
   bankReference String?
-  failReason String?
-  paidAt     DateTime?
-  createdAt  DateTime    @default(now())
+  failReason    String?
+  paidAt        DateTime?
+  createdAt     DateTime    @default(now())
 
   ledger LedgerEntry[]
 
@@ -201,4 +216,64 @@ model Payout {
 model Setting {
   key   String @id
   value String
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String   @default("")
+  href      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+/// Sipariş içi müşteri ↔ işletme yazışması
+model Message {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  customerId String
+  customer   User     @relation("CustomerReviews", fields: [customerId], references: [id])
+  businessId String
+  business   User     @relation("BusinessReviews", fields: [businessId], references: [id])
+  /// 1-5
+  rating     Int
+  comment    String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
+}
+
+/// Müşterinin kullanılmayan bakiyesini IBAN'ına çekme talebi
+model Withdrawal {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  amount        Int
+  iban          String
+  ibanHolder    String
+  /// PENDING | PAID | REJECTED
+  status        String    @default("PENDING")
+  bankReference String?
+  adminNote     String?
+  createdAt     DateTime  @default(now())
+  processedAt   DateTime?
+
+  ledger LedgerEntry[]
 }

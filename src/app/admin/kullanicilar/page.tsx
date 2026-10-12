@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/dates";
 import { formatIban } from "@/lib/iban";
 import { formatTL } from "@/lib/money";
-import { adjustBalanceAction, setUserStatusAction, toggleVerifiedAction } from "../actions";
+import { adjustBalanceAction, createAdminAction, resetUserPasswordAction, setUserStatusAction, toggleVerifiedAction } from "../actions";
 
 export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; rol?: string }> }) {
   const { q, rol } = await searchParams;
@@ -32,6 +32,20 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
         </select>
         <button className="btn-secondary">Ara</button>
       </form>
+      <details className="card mb-6">
+        <summary className="cursor-pointer font-semibold">+ Yeni yönetici ekle</summary>
+        <ActionForm action={createAdminAction} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div>
+            <label className="label" htmlFor="na-name">Ad soyad</label>
+            <input className="input" id="na-name" name="name" required />
+          </div>
+          <div>
+            <label className="label" htmlFor="na-email">E-posta</label>
+            <input className="input" id="na-email" name="email" type="email" required />
+          </div>
+          <SubmitButton>Oluştur</SubmitButton>
+        </ActionForm>
+      </details>
       <div className="space-y-3">
         {users.map((u) => (
           <details key={u.id} className="card">
@@ -64,6 +78,12 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                     <SubmitButton className={u.status === "ACTIVE" ? "btn-danger" : "btn-secondary"}>
                       {u.status === "ACTIVE" ? "Askıya al" : "Aktifleştir"}
                     </SubmitButton>
+                  </ActionForm>
+                )}
+                {u.role !== "ADMIN" && (
+                  <ActionForm action={resetUserPasswordAction} confirm="Kullanıcıya geçici şifre atanacak ve tüm oturumları kapanacak. Devam edilsin mi?">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <SubmitButton className="btn-secondary">Geçici şifre ver</SubmitButton>
                   </ActionForm>
                 )}
                 {u.business && (

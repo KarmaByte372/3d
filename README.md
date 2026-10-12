@@ -14,16 +14,18 @@
 7. **Her çarşamba 09:00'da** (İstanbul) ödeme partisi oluşur. Admin gün içinde transferleri yapar ve "Ödendi" işaretler.
    Başarısız transferler işletme bakiyesine geri döner.
 
-İptalde emanetteki tutarın tamamı müşteriye iade edilir. Komisyon oranının nasıl belirlendiği için:
+İptalde emanetteki tutarın tamamı müşteriye iade edilir. Müşteri sorun bildirirse otomatik onay durur ve kararı
+admin verir. Tamamlanan siparişler 1-5 yıldızla değerlendirilir. Puanlar teklif kartlarında ve atölyenin herkese
+açık profilinde (`/atolye/[id]`) görünür. Komisyon oranının nasıl belirlendiği için:
 [docs/komisyon.md](docs/komisyon.md).
 
 ## Roller ve paneller
 
 | Rol | Yol | Özellikler |
 |---|---|---|
-| Müşteri | `/musteri` | Talepler, teklif karşılaştırma/kabul, siparişler, teslim onayı, bakiye yükleme, hesap hareketleri |
-| İşletme | `/isletme` | Açık talepler (şehir/malzeme filtresi), teklif ver/güncelle/geri çek, sipariş kargolama/iptal, kazanç ve ödemeler, profil ve IBAN |
-| Admin | `/admin` | Özet (komisyon geliri, emanet, işletmelere borç), kullanıcılar (askıya alma, işletme doğrulama, bakiye düzeltme), havale onayı, sipariş anlaşmazlıkları (tamamla / iptal ve iade), çarşamba ödemeleri (CSV dışa aktarım, ödendi/başarısız), ayarlar (komisyon oranı vb.) |
+| Müşteri | `/musteri` | Talepler, teklif karşılaştırma/kabul (atölye puanlarıyla), sipariş detayı ve mesajlaşma, teslim onayı, sorun bildirme, değerlendirme, bakiye yükleme ve IBAN'a para çekme, bildirimler, Hesabım (şifre değiştirme) |
+| İşletme | `/isletme` | Açık talepler (şehir/malzeme filtresi), teklif ver/güncelle/geri çek, sipariş detayı ve mesajlaşma, kargolama/iptal, kazanç ve ödemeler, profil ve IBAN, herkese açık profil, bildirimler, Hesabım |
+| Admin | `/admin` | Özet ve uyarılar (anlaşmazlık, havale, çekim), kullanıcılar (askıya alma, doğrulama, bakiye düzeltme, geçici şifre, yeni yönetici), havale onayı, para çekme talepleri, sipariş inceleme (mesajlar, para hareketleri, tamamla / iptal ve iade), çarşamba ödemeleri, ayarlar |
 
 ## Kurulum
 
@@ -62,6 +64,8 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
   bakiye eksiye düşmez. Komisyon geliri kullanıcısız (platform) defter kaydıdır.
 - Komisyon oranı sipariş anında siparişe yazılır. Sonradan ayar değişse de eski siparişler etkilenmez.
 - Oturum: imzalı JWT, httpOnly çerez. Şifreler bcrypt ile saklanır. Askıya alınan hesap anında erişimini kaybeder.
+  Şifre değişince ya da admin sıfırlayınca diğer cihazlardaki oturumlar kapanır (`sessionVersion`).
+- Giriş denemeleri sınırlıdır: hesap başına 15 dakikada 5, IP başına 30 hatalı deneme.
 - Model dosyaları `uploads/` altında (public değil) tutulur. Yalnızca talep sahibi, ilgili işletmeler ve admin indirebilir.
 
 ## Canlıya almadan önce yapılacaklar
@@ -76,4 +80,6 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
   hizmeti sayılabilir. Bir ödeme kuruluşunun pazaryeri çözümü (alt üye işyeri, ör. iyzico veya PayTR
   Pazaryeri) kullanılması veya hukuki görüş alınması önerilir. KVKK metinleri, mesafeli satış sözleşmesi ve
   komisyon faturalandırması (e-fatura) da eklenmelidir.
-- Giriş denemelerine hız sınırı (rate limit) ve e-posta doğrulama eklenmesi önerilir.
+- **E-posta gönderimi yok:** "Şifremi unuttum" bağlantısı, e-posta doğrulama ve e-posta bildirimleri için bir SMTP
+  servisi gerekir. O zamana kadar şifresini unutan kullanıcıya admin, Kullanıcılar sayfasından geçici şifre verir.
+- `/kosullar` ve `/kvkk` sayfaları taslaktır. Şirket bilgileriyle doldurulup bir hukukçuya kontrol ettirilmeli.

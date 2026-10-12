@@ -4,7 +4,7 @@ import { SignJWT, jwtVerify } from "jose";
 export const SESSION_COOKIE = "b3d_session";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
-export type SessionPayload = { sub: string; role: string };
+export type SessionPayload = { sub: string; role: string; ver: number };
 
 function secret() {
   const s = process.env.SESSION_SECRET;
@@ -13,7 +13,7 @@ function secret() {
 }
 
 export async function signSession(payload: SessionPayload) {
-  return new SignJWT({ role: payload.role })
+  return new SignJWT({ role: payload.role, ver: payload.ver })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
@@ -26,7 +26,7 @@ export async function verifySession(token: string | undefined): Promise<SessionP
   try {
     const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
     if (typeof payload.sub !== "string" || typeof payload.role !== "string") return null;
-    return { sub: payload.sub, role: payload.role };
+    return { sub: payload.sub, role: payload.role, ver: typeof payload.ver === "number" ? payload.ver : 0 };
   } catch {
     return null;
   }

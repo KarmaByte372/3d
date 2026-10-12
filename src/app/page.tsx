@@ -236,7 +236,11 @@ export default async function Home() {
       <footer className="border-t border-ink-100">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-ink-400">
           <Logo />
-          <p>© {new Date().getFullYear()} Baskı3D · 3D baskı hizmetleri pazaryeri</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/kosullar" className="hover:text-ink-700">Kullanım koşulları</Link>
+            <Link href="/kvkk" className="hover:text-ink-700">KVKK</Link>
+            <span>© {new Date().getFullYear()} Baskı3D</span>
+          </div>
         </div>
       </footer>
     </div>

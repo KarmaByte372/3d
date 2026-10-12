@@ -62,7 +62,7 @@ export function RegisterForm({ initialRole }: { initialRole: "CUSTOMER" | "BUSIN
       </div>
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="terms" className="mt-1 accent-brand-500" required />
-        <span className="text-ink-500">Kullanım koşullarını ve KVKK aydınlatma metnini okudum, kabul ediyorum.</span>
+        <span className="text-ink-500"><a href="/kosullar" target="_blank" className="link">Kullanım koşullarını</a> ve <a href="/kvkk" target="_blank" className="link">KVKK aydınlatma metnini</a> okudum, kabul ediyorum.</span>
       </label>
       <SubmitButton className="btn w-full py-3">Hesap oluştur</SubmitButton>
     </ActionForm>

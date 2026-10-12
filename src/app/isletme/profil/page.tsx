@@ -10,7 +10,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
   const b = user.business!;
   return (
     <>
-      <PageTitle eyebrow="Atölye">Profil & IBAN</PageTitle>
+      <PageTitle eyebrow="Atölye" action={<a href={`/atolye/${user.id}`} target="_blank" className="btn-secondary">Herkese açık profilim ↗</a>}>Profil & IBAN</PageTitle>
       {hosgeldin && (
         <div className="mb-5 rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-green-900">
           Hesabın oluşturuldu! Profilini tamamla ve ödeme alabilmek için IBAN&apos;ını ekle.
