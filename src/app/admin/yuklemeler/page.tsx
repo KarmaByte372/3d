@@ -32,7 +32,7 @@ export default async function AdminTopUps() {
               </ActionForm>
               <ActionForm action={rejectTopUpAction} className="flex gap-2">
                 <input type="hidden" name="topUpId" value={t.id} />
-                <input className="input w-48" name="note" placeholder="Red nedeni" />
+                <input className="input min-w-0 flex-1 sm:w-48 sm:flex-none" name="note" placeholder="Red nedeni" />
                 <SubmitButton className="btn-danger">Reddet</SubmitButton>
               </ActionForm>
             </div>
@@ -46,13 +46,13 @@ export default async function AdminTopUps() {
           <tbody>
             {recent.map((t) => (
               <tr key={t.id}>
-                <td>{formatDateTime(t.processedAt)}</td>
-                <td>{t.user.email}</td>
-                <td>{t.method === "CARD" ? "Kart" : "Havale"}</td>
-                <td className="font-mono">{t.reference}</td>
-                <td>{formatTL(t.amount)}</td>
-                <td><Badge status={t.status} /></td>
-                <td>{t.adminNote}</td>
+                <td data-label="İşlem">{formatDateTime(t.processedAt)}</td>
+                <td data-label="Kullanıcı">{t.user.email}</td>
+                <td data-label="Yöntem">{t.method === "CARD" ? "Kart" : "Havale"}</td>
+                <td data-label="Kod" className="font-mono">{t.reference}</td>
+                <td data-label="Tutar">{formatTL(t.amount)}</td>
+                <td data-label="Durum"><Badge status={t.status} /></td>
+                <td data-label="Not">{t.adminNote}</td>
               </tr>
             ))}
           </tbody>

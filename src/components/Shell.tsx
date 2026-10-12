@@ -3,7 +3,7 @@ import { formatTL } from "@/lib/money";
 import Link from "next/link";
 import { IconBell, IconLogout, IconWallet } from "./Icons";
 import { Logo } from "./Logo";
-import { NavLinks, type NavItem } from "./NavLinks";
+import { MobileNav, NavLinks, type NavItem } from "./NavLinks";
 import * as Icons from "./Icons";
 
 export function Shell({
@@ -36,14 +36,14 @@ export function Shell({
     <div className="min-h-screen bg-ink-50">
       <header className="sticky top-0 z-30 bg-ink-900 bg-plate">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 py-3">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3 py-3">
+            <div className="flex min-w-0 items-center gap-3">
               <Logo dark />
-              <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-ink-300">
+              <span className="hidden truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-ink-300 sm:inline">
                 {title}
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-none items-center gap-2 sm:gap-3">
               {showBalance && (
                 <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
                   <IconWallet className="h-4 w-4 text-filament-orange" />
@@ -64,13 +64,13 @@ export function Shell({
                   </span>
                 )}
               </Link>
-              <Link href={`${base}/hesap`} className="flex items-center gap-2 rounded-lg p-0.5 transition hover:bg-white/10" title="Hesabım">
+              <Link href={`${base}/hesap`} className="hidden items-center gap-2 rounded-lg p-0.5 transition hover:bg-white/10 md:flex" title="Hesabım">
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-filament-orange to-filament-pink text-xs font-bold text-white">
                   {initials}
                 </span>
                 <span className="hidden pr-2 text-sm text-ink-200 md:inline">{user.name}</span>
               </Link>
-              <form action={logoutAction}>
+              <form action={logoutAction} className="hidden md:block">
                 <button
                   className="grid h-8 w-8 place-items-center rounded-lg text-ink-300 transition hover:bg-white/10 hover:text-white"
                   title="Çıkış yap"
@@ -85,7 +85,8 @@ export function Shell({
         </div>
         <div className="filament-line" />
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:py-8 md:pb-8">{children}</main>
+      <MobileNav items={nav} base={base} unread={unread} logout={logoutAction} />
     </div>
   );
 }
@@ -103,9 +104,9 @@ export function PageTitle({
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
+      <div className="min-w-0">
         {eyebrow && <p className="eyebrow mb-1">{eyebrow}</p>}
-        <h1 className="text-2xl font-bold sm:text-3xl">{children}</h1>
+        <h1 className="break-words text-2xl font-bold sm:text-3xl">{children}</h1>
         {description && <p className="mt-1 text-sm text-ink-500">{description}</p>}
       </div>
       {action}

@@ -32,7 +32,7 @@ export default async function CustomerOrderDetail({ params }: { params: Promise<
       <PageTitle eyebrow="Sipariş" action={<Link href="/musteri/siparisler" className="btn-secondary">← Siparişlerim</Link>}>
         {order.request.title}
       </PageTitle>
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px] [&>*]:min-w-0">
         <div className="space-y-6">
           <OrderSummary
             order={order}

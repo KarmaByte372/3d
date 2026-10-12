@@ -34,7 +34,7 @@ export default async function CustomerOrders() {
                   {o.business.business?.companyName ?? o.business.name} · {formatDateTime(o.createdAt)}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right">
                 <p className="font-display text-xl font-bold">{formatTL(o.amount)}</p>
                 <Badge status={o.status} />
               </div>

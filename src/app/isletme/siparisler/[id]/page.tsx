@@ -25,7 +25,7 @@ export default async function BusinessOrderDetail({ params }: { params: Promise<
       <PageTitle eyebrow="Sipariş" action={<Link href="/isletme/siparisler" className="btn-secondary">← Siparişler</Link>}>
         {order.request.title}
       </PageTitle>
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px] [&>*]:min-w-0">
         <div className="space-y-6">
           <OrderSummary order={order} view="business" counterpart={<>Müşteri: <strong className="text-ink-800">{order.customer.name}</strong></>} />
           {order.status === "IN_PROGRESS" && (

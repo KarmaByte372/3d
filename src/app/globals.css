@@ -109,3 +109,51 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Telefonda tablolar: her satır etiketli bir karta dönüşür (yana kaydırma yok) */
+@media (max-width: 639px) {
+  .table thead {
+    display: none;
+  }
+  .table,
+  .table tbody,
+  .table tr {
+    display: block;
+    width: 100%;
+  }
+  .table tr {
+    border-top: 1px solid theme("colors.ink.100");
+    padding: 0.75rem 1rem;
+  }
+  .table tbody tr:first-child {
+    border-top: 0;
+  }
+  .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 0;
+    padding: 0.2rem 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .table td::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    text-align: left;
+    font-family: theme("fontFamily.mono");
+    font-size: 11px;
+    line-height: 1.6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: theme("colors.ink.400");
+  }
+  .table td[data-label=""] {
+    justify-content: flex-start;
+  }
+  .table td[data-label=""]::before {
+    content: none;
+  }
+}

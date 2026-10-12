@@ -48,7 +48,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
                 <p className="text-ink-500">{formatDateTime(o.createdAt)}{o.trackingInfo ? ` · Kargo: ${o.trackingInfo}` : ""}</p>
                 {o.cancelReason && <p className="text-ink-600">İptal: {o.cancelReason}</p>}
               </div>
-              <div className="text-right">
+              <div className="sm:text-right">
                 <p>{formatTL(o.amount)} · komisyon {formatBps(o.commissionBps)} = <strong>{formatTL(o.commissionAmount)}</strong></p>
                 <p className="text-ink-500">İşletmeye: {formatTL(o.businessEarning)}</p>
                 <Badge status={o.status} />
@@ -62,7 +62,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
                 </ActionForm>
                 <ActionForm action={adminCancelOrderAction} confirm="Sipariş iptal edilecek ve tutarın tamamı müşteriye iade edilecek." className="flex gap-2">
                   <input type="hidden" name="orderId" value={o.id} />
-                  <input className="input w-56" name="reason" placeholder="İptal nedeni" />
+                  <input className="input min-w-0 flex-1 sm:w-56 sm:flex-none" name="reason" placeholder="İptal nedeni" />
                   <SubmitButton className="btn-danger">İptal + iade (müşteri lehine)</SubmitButton>
                 </ActionForm>
               </div>

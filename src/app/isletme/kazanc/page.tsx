@@ -53,12 +53,12 @@ export default async function Earnings() {
             <tbody>
               {payouts.map((p) => (
                 <tr key={p.id}>
-                  <td>{formatDate(p.batch.payoutDate)}</td>
-                  <td>{formatTL(p.amount)}</td>
-                  <td className="font-mono text-xs">{formatIban(p.iban)}</td>
-                  <td><Badge status={p.status} />{p.failReason && <p className="text-xs text-red-600">{p.failReason}</p>}</td>
-                  <td>{p.bankReference ?? "—"}</td>
-                  <td>{formatDateTime(p.paidAt)}</td>
+                  <td data-label="Ödeme günü">{formatDate(p.batch.payoutDate)}</td>
+                  <td data-label="Tutar">{formatTL(p.amount)}</td>
+                  <td data-label="IBAN" className="font-mono text-xs">{formatIban(p.iban)}</td>
+                  <td data-label="Durum"><Badge status={p.status} />{p.failReason && <p className="text-xs text-red-600">{p.failReason}</p>}</td>
+                  <td data-label="Dekont">{p.bankReference ?? "—"}</td>
+                  <td data-label="Ödenme">{formatDateTime(p.paidAt)}</td>
                 </tr>
               ))}
             </tbody>

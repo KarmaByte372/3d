@@ -27,14 +27,14 @@ export function OrderSummary({ order, view, counterpart }: { order: O; view: "cu
   return (
     <div className="card">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-ink-500">{counterpart}</p>
+        <div className="min-w-0 flex-1 basis-60">
+          <p className="break-words text-sm text-ink-500">{counterpart}</p>
           <p className="mt-1 font-mono text-[11px] text-ink-400">Sipariş #{order.id.slice(-8).toUpperCase()} · {formatDateTime(order.createdAt)}</p>
           {order.request.fileName && (
             <a href={`/api/files/${order.request.id}`} className="link mt-2 inline-block text-sm">Model: {order.request.fileName}</a>
           )}
         </div>
-        <div className="text-right text-sm">
+        <div className="text-sm sm:text-right">
           {view === "customer" ? (
             <p className="font-display text-2xl font-bold">{formatTL(order.amount)}</p>
           ) : (

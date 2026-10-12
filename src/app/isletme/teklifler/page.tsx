@@ -28,12 +28,12 @@ export default async function MyQuotes() {
             <tbody>
               {quotes.map((q) => (
                 <tr key={q.id}>
-                  <td><Link href={`/isletme/talepler/${q.requestId}`} className="link">{q.request.title}</Link></td>
-                  <td>{formatTL(q.price)}</td>
-                  <td>{q.deliveryDays} gün</td>
-                  <td><Badge status={q.status} /></td>
-                  <td>{formatDateTime(q.createdAt)}</td>
-                  <td>
+                  <td data-label="Talep"><Link href={`/isletme/talepler/${q.requestId}`} className="link">{q.request.title}</Link></td>
+                  <td data-label="Fiyat">{formatTL(q.price)}</td>
+                  <td data-label="Teslim">{q.deliveryDays} gün</td>
+                  <td data-label="Durum"><Badge status={q.status} /></td>
+                  <td data-label="Tarih">{formatDateTime(q.createdAt)}</td>
+                  <td data-label="">
                     {q.status === "PENDING" && (
                       <ActionForm action={withdrawQuoteAction} confirm="Teklif geri çekilsin mi?">
                         <input type="hidden" name="quoteId" value={q.id} />

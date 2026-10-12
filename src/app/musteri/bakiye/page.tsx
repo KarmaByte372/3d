@@ -71,12 +71,12 @@ export default async function BalancePage() {
               <tbody>
                 {topUps.map((t) => (
                   <tr key={t.id}>
-                    <td>{formatDateTime(t.createdAt)}</td>
-                    <td>{t.method === "CARD" ? "Kart" : "Havale/EFT"}</td>
-                    <td className="font-mono">{t.reference}</td>
-                    <td>{formatTL(t.amount)}</td>
-                    <td><Badge status={t.status} /></td>
-                    <td>{t.adminNote ?? ""}</td>
+                    <td data-label="Tarih">{formatDateTime(t.createdAt)}</td>
+                    <td data-label="Yöntem">{t.method === "CARD" ? "Kart" : "Havale/EFT"}</td>
+                    <td data-label="Kod" className="font-mono">{t.reference}</td>
+                    <td data-label="Tutar">{formatTL(t.amount)}</td>
+                    <td data-label="Durum"><Badge status={t.status} /></td>
+                    <td data-label="Not">{t.adminNote ?? ""}</td>
                   </tr>
                 ))}
               </tbody>

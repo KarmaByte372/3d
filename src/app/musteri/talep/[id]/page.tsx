@@ -39,7 +39,7 @@ export default async function RequestDetail({ params }: { params: Promise<{ id: 
       >
         {request.title}
       </PageTitle>
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr] [&>*]:min-w-0">
         <div className="space-y-3">
           <SpecSheet request={request} />
           {open && (

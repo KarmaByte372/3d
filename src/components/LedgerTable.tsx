@@ -14,13 +14,13 @@ export function LedgerTable({ entries }: { entries: Entry[] }) {
         <tbody>
           {entries.map((e) => (
             <tr key={e.id}>
-              <td className="whitespace-nowrap">{formatDateTime(e.createdAt)}</td>
-              <td>{LEDGER_LABELS[e.type] ?? e.type}</td>
-              <td>{e.description}</td>
-              <td className={`whitespace-nowrap text-right font-medium ${e.amount < 0 ? "text-red-600" : "text-green-700"}`}>
+              <td data-label="Tarih" className="whitespace-nowrap">{formatDateTime(e.createdAt)}</td>
+              <td data-label="İşlem">{LEDGER_LABELS[e.type] ?? e.type}</td>
+              <td data-label="Açıklama">{e.description}</td>
+              <td data-label="Tutar" className={`whitespace-nowrap text-right font-medium ${e.amount < 0 ? "text-red-600" : "text-green-700"}`}>
                 {e.amount > 0 ? "+" : ""}{formatTL(e.amount)}
               </td>
-              <td className="whitespace-nowrap text-right">{e.balanceAfter === null ? "—" : formatTL(e.balanceAfter)}</td>
+              <td data-label="Bakiye" className="whitespace-nowrap text-right">{e.balanceAfter === null ? "—" : formatTL(e.balanceAfter)}</td>
             </tr>
           ))}
         </tbody>

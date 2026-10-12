@@ -32,7 +32,7 @@ export default async function BusinessRequestDetail({ params }: { params: Promis
       <PageTitle eyebrow={`Açık talep · ${formatDateTime(request.createdAt)}`} action={<Badge status={request.status} />}>
         {request.title}
       </PageTitle>
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr] [&>*]:min-w-0">
         <div className="space-y-3">
           <SpecSheet request={request} />
           <p className="chip w-full justify-center font-mono">

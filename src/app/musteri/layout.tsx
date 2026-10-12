@@ -16,8 +16,8 @@ export default async function CustomerLayout({ children }: { children: React.Rea
       showBalance
       nav={[
         { href: "/musteri", label: "Taleplerim", icon: "IconLayers" },
-        { href: "/musteri/talep/yeni", label: "Yeni talep", icon: "IconPlus" },
-        { href: "/musteri/siparisler", label: "Siparişlerim", icon: "IconBox" },
+        { href: "/musteri/talep/yeni", label: "Yeni talep", short: "Yeni", icon: "IconPlus" },
+        { href: "/musteri/siparisler", label: "Siparişlerim", short: "Siparişler", icon: "IconBox" },
         { href: "/musteri/bakiye", label: "Bakiye", icon: "IconWallet" },
       ]}
     >

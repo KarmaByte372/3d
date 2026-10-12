@@ -31,7 +31,7 @@ export default async function BusinessOrders() {
                 </p>
                 {o.request.fileName && <a href={`/api/files/${o.requestId}`} className="link text-sm">📎 {o.request.fileName}</a>}
               </div>
-              <div className="text-right text-sm">
+              <div className="sm:text-right text-sm">
                 <p>Sipariş: <strong>{formatTL(o.amount)}</strong></p>
                 <p className="text-ink-500">Komisyon ({formatBps(o.commissionBps)}): −{formatTL(o.commissionAmount)}</p>
                 <p className="text-green-700">Net kazanç: <strong>{formatTL(o.businessEarning)}</strong></p>

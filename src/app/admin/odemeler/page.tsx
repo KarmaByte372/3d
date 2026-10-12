@@ -75,26 +75,26 @@ export default async function AdminPayouts() {
                     <tbody>
                       {b.payouts.map((p) => (
                         <tr key={p.id}>
-                          <td>{p.business.business?.companyName}<br /><span className="text-xs text-ink-500">{p.business.email}</span></td>
-                          <td>{p.ibanHolder}<br /><span className="font-mono text-xs">{formatIban(p.iban)}</span></td>
-                          <td className="whitespace-nowrap font-semibold">{formatTL(p.amount)}</td>
-                          <td>
+                          <td data-label="İşletme">{p.business.business?.companyName}<br /><span className="text-xs text-ink-500">{p.business.email}</span></td>
+                          <td data-label="Hesap sahibi / IBAN">{p.ibanHolder}<br /><span className="font-mono text-xs">{formatIban(p.iban)}</span></td>
+                          <td data-label="Tutar" className="whitespace-nowrap font-semibold">{formatTL(p.amount)}</td>
+                          <td data-label="Durum">
                             <Badge status={p.status} />
                             {p.paidAt && <p className="text-xs text-ink-500">{formatDateTime(p.paidAt)}</p>}
                             {p.bankReference && <p className="text-xs text-ink-500">Dekont: {p.bankReference}</p>}
                             {p.failReason && <p className="text-xs text-red-600">{p.failReason}</p>}
                           </td>
-                          <td>
+                          <td data-label="">
                             {p.status === "PENDING" && (
                               <div className="flex flex-col gap-2">
                                 <ActionForm action={markPaidAction} className="flex gap-2">
                                   <input type="hidden" name="payoutId" value={p.id} />
-                                  <input className="input w-36" name="bankReference" placeholder="Dekont no" />
+                                  <input className="input min-w-0 flex-1 sm:w-36 sm:flex-none" name="bankReference" placeholder="Dekont no" />
                                   <SubmitButton>Ödendi</SubmitButton>
                                 </ActionForm>
                                 <ActionForm action={markFailedAction} confirm="Tutar işletmenin bakiyesine iade edilecek." className="flex gap-2">
                                   <input type="hidden" name="payoutId" value={p.id} />
-                                  <input className="input w-36" name="reason" placeholder="Hata nedeni" />
+                                  <input className="input min-w-0 flex-1 sm:w-36 sm:flex-none" name="reason" placeholder="Hata nedeni" />
                                   <SubmitButton className="btn-danger">Başarısız</SubmitButton>
                                 </ActionForm>
                               </div>

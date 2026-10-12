@@ -23,7 +23,7 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
       <PageTitle eyebrow="Sipariş incelemesi" action={<Link href="/admin/siparisler" className="btn-secondary">← Siparişler</Link>}>
         {order.request.title}
       </PageTitle>
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px] [&>*]:min-w-0">
         <div className="space-y-6">
           <OrderSummary
             order={order}
