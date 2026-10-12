@@ -6,6 +6,8 @@ import { prisma } from "./db";
  * Admin panelinden değiştirilebilir.
  */
 export const DEFAULT_SETTINGS = {
+  /** TC kimlik doğrulaması zorunlu mu ("true"/"false"); admin → Entegrasyonlar'dan açılır */
+  identityRequired: "false",
   /** Sitenin/markanın görünen adı (logo, başlıklar, SMS metinleri) */
   siteName: "Baskı3D",
   /** Yasal metinlerde geçen şirket bilgileri */

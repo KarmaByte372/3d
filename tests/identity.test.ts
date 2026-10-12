@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { approveIdentity, maskedTcknOf, rejectIdentity, submitIdentity } from "@/lib/identity";
 import { submitQuote } from "@/lib/marketplace";
+import { getSettings, updateSettings } from "@/lib/settings";
+import { isIdentityRequired } from "@/lib/identity";
 import { isValidTckn, maskTckn } from "@/lib/tckn";
 import { fakeTckn, makeBusiness, makeCustomer, makeRequest, resetDb } from "./helpers";
 
@@ -55,7 +57,17 @@ describe("kimlik gönderimi", () => {
     await expect(submitIdentity(w.id, input("10000000146"))).resolves.toBeTruthy();
   });
 
-  it("atölye onaya düşer, onaylanana kadar teklif veremez; admin bildirim alır", async () => {
+  it("varsayılan kapalı: kimliği olmayan atölye teklif verebilir", async () => {
+    expect((await getSettings()).identityRequired).toBe("false");
+    expect(await isIdentityRequired()).toBe(false);
+    const w = await fresh("BUSINESS");
+    const c = await makeCustomer();
+    const req = await makeRequest(c.id);
+    await expect(submitQuote({ businessId: w.id, requestId: req.id, price: 1000, deliveryDays: 2, message: "" })).resolves.toBeTruthy();
+  });
+
+  it("açıkken atölye onaya düşer, onaylanana kadar teklif veremez; admin bildirim alır", async () => {
+    await updateSettings({ identityRequired: "true" });
     const admin = await prisma.user.create({ data: { email: "a@x.tr", passwordHash: "x", name: "A", role: "ADMIN" } });
     const w = await fresh("BUSINESS");
     const c = await makeCustomer();

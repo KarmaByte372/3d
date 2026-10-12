@@ -19,7 +19,7 @@ export async function submitQuote(input: {
 
   const settings = await getSettings();
   const business = await prisma.user.findUnique({ where: { id: input.businessId }, select: { identityStatus: true } });
-  if (business?.identityStatus !== "VERIFIED") {
+  if (settings.identityRequired === "true" && business?.identityStatus !== "VERIFIED") {
     throw new AppError("Kimlik bilgilerin yönetici tarafından onaylandıktan sonra teklif verebilirsin.");
   }
   return prisma.$transaction(async (tx) => {

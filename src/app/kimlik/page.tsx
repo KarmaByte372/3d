@@ -3,7 +3,7 @@ import { logoutAction } from "../actions";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { AuthLayout } from "@/components/AuthLayout";
 import { requireAnyUser } from "@/lib/auth";
-import { needsIdentity } from "@/lib/identity";
+import { isIdentityRequired, needsIdentity } from "@/lib/identity";
 import { HOME_BY_ROLE } from "@/lib/session";
 import { submitIdentityAction } from "./actions";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function IdentityPage() {
   const user = await requireAnyUser();
   if (!user.phoneVerifiedAt && user.role !== "ADMIN") redirect("/dogrula");
-  if (!needsIdentity(user)) redirect(HOME_BY_ROLE[user.role] ?? "/");
+  if (!needsIdentity(user) || !(await isIdentityRequired())) redirect(HOME_BY_ROLE[user.role] ?? "/");
   const isBusiness = user.role === "BUSINESS";
   const thisYear = new Date().getFullYear();
 

@@ -1,7 +1,7 @@
 import { changePasswordAction, updateAccountAction } from "@/app/hesap-actions";
 import { changePhoneAction } from "@/app/dogrula/actions";
 import { formatPhone } from "@/lib/phone";
-import { maskedTcknOf } from "@/lib/identity";
+import { isIdentityRequired, maskedTcknOf } from "@/lib/identity";
 import { Badge } from "./Badge";
 import { ActionForm, SubmitButton } from "./ActionForm";
 import { IconShield, IconUser } from "./Icons";
@@ -23,7 +23,8 @@ type U = {
   tcknEnc: string | null;
 };
 
-export function AccountPage({ user }: { user: U }) {
+export async function AccountPage({ user }: { user: U }) {
+  const identityOn = await isIdentityRequired();
   return (
     <>
       <PageTitle eyebrow="Hesap" description={`Üyelik: ${formatDateTime(user.createdAt)}`}>Hesabım</PageTitle>
@@ -42,7 +43,7 @@ export function AccountPage({ user }: { user: U }) {
             <SubmitButton>Kaydet</SubmitButton>
           </ActionForm>
         </div>
-        {user.role !== "ADMIN" && (
+        {user.role !== "ADMIN" && (identityOn || user.identityStatus !== "NONE") && (
           <div className="card p-6 lg:col-span-2">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-semibold">Kimlik</h2>

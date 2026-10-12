@@ -326,3 +326,19 @@ export async function rejectIdentityAction(_: ActionState, f: FormData): Promise
     return toActionError(e);
   }
 }
+
+export async function saveIdentitySettingAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const on = f.get("identityRequired") === "on";
+    await updateSettings({ identityRequired: on ? "true" : "false" });
+    revalidatePath("/", "layout");
+    return {
+      ok: on
+        ? "TC kimlik doğrulaması açıldı. Kimliği olmayan kullanıcılar bir sonraki sayfada kimlik adımına yönlendirilecek."
+        : "TC kimlik doğrulaması kapatıldı. Kimse kimlik adımına yönlendirilmez; atölyeler onaysız teklif verebilir.",
+    };
+  } catch (e) {
+    return toActionError(e);
+  }
+}

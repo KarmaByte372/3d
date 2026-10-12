@@ -92,7 +92,9 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
 
 ## TC kimlik doğrulama
 
-- Telefon doğrulamasından sonra müşteri ve atölyeler `/kimlik` adımında T.C. kimlik numarası, ad, soyad ve doğum yılı
+- **Varsayılan kapalıdır.** Admin → Entegrasyonlar → "TC kimlik iste" ile açılıp kapatılır. Kapalıyken kimse kimlik
+  adımına yönlendirilmez ve atölyeler onaysız teklif verebilir; daha önce girilen bilgiler silinmez.
+- Açıkken telefon doğrulamasından sonra müşteri ve atölyeler `/kimlik` adımında T.C. kimlik numarası, ad, soyad ve doğum yılı
   girer; tamamlanmadan panele girilemez. 18 yaş altı kabul edilmez.
 - Numara algoritmayla kontrol edilir. **Müşteri** hemen doğrulanır; **atölye** yönetici onayına düşer ve onaylanana
   kadar teklif veremez (admin → Kullanıcılar → "Onay bekleyen"). Reddedilen kullanıcı bilgilerini yeniden girer.

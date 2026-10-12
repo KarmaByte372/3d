@@ -5,6 +5,12 @@ import { AppError } from "./errors";
 import { notify, notifyAdmins } from "./notifications";
 import { seal, unseal } from "./secret-box";
 import { isValidTckn, maskTckn } from "./tckn";
+import { getSettings } from "./settings";
+
+/** TC kimlik adımı admin panelinden açılıp kapatılır; kapalıyken kimse kimlik adımına yönlendirilmez. */
+export async function isIdentityRequired() {
+  return (await getSettings()).identityRequired === "true";
+}
 
 export const MIN_AGE = 18;
 

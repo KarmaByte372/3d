@@ -48,12 +48,12 @@ export default async function BusinessRequestDetail({ params }: { params: Promis
             (ör. {formatTL(100000)} teklifte eline {formatTL(example.earning)} geçer).
           </p>
           {mine && <p className="mb-3 text-sm">Durum: <Badge status={mine.status} /></p>}
-          {user.identityStatus !== "VERIFIED" && (
+          {settings.identityRequired === "true" && user.identityStatus !== "VERIFIED" && (
             <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
               Kimlik bilgilerin yönetici tarafından onaylandıktan sonra teklif verebilirsin.
             </p>
           )}
-          {user.identityStatus === "VERIFIED" && request.status === "OPEN" && (!mine || mine.status === "PENDING" || mine.status === "WITHDRAWN") && (
+          {(settings.identityRequired !== "true" || user.identityStatus === "VERIFIED") && request.status === "OPEN" && (!mine || mine.status === "PENDING" || mine.status === "WITHDRAWN") && (
             <ActionForm action={submitQuoteAction} className="space-y-3">
               <input type="hidden" name="requestId" value={request.id} />
               <div className="grid grid-cols-2 gap-3">

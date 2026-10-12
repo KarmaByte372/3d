@@ -4,7 +4,10 @@ import { PageTitle } from "@/components/Shell";
 import { requireUser } from "@/lib/auth";
 import { getSmsConfig, getSmtpConfig, hasSecret } from "@/lib/integrations";
 import { formatPhone } from "@/lib/phone";
-import { saveSmsSettingsAction, saveSmtpSettingsAction, testMailAction, testSmsAction } from "../actions";
+import { saveIdentitySettingAction, saveSmsSettingsAction, saveSmtpSettingsAction, testMailAction, testSmsAction } from "../actions";
+import { getSettings } from "@/lib/settings";
+import { prisma } from "@/lib/db";
+import Link from "next/link";
 
 function SecretInput({ name, saved }: { name: string; saved: boolean }) {
   return (
@@ -43,6 +46,12 @@ export default async function IntegrationsPage() {
     hasSecret("smtpPassword"),
   ]);
   const smsReady = sms.provider === "netgsm" && !!sms.usercode && !!sms.msgheader && smsSaved;
+  const [{ identityRequired }, idCounts] = await Promise.all([
+    getSettings(),
+    prisma.user.groupBy({ by: ["identityStatus"], where: { role: { not: "ADMIN" } }, _count: true }),
+  ]);
+  const idOn = identityRequired === "true";
+  const countOf = (s: string) => idCounts.find((c) => c.identityStatus === s)?._count ?? 0;
 
   return (
     <>
@@ -51,6 +60,32 @@ export default async function IntegrationsPage() {
       </PageTitle>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* TC KİMLİK */}
+        <section className="card p-6 lg:col-span-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold"><IconShield className="h-5 w-5 text-brand-600" /> TC kimlik doğrulama</h2>
+            <Status ok={idOn}>{idOn ? "Açık" : "Kapalı"}</Status>
+          </div>
+          <p className="mb-4 text-sm text-ink-500">
+            Açıkken müşteri ve atölyeler telefon doğrulamasından sonra T.C. kimlik no, ad, soyad ve doğum yılı girer (18 yaş altı kabul edilmez).
+            Müşteriler numara algoritmayla kontrol edilip hemen onaylanır; atölyeler yönetici onayına kadar teklif veremez.
+            Kapalıyken kimse kimlik adımına yönlendirilmez, daha önce girilen bilgiler silinmez.
+          </p>
+          <ActionForm action={saveIdentitySettingAction} className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-3 text-sm font-medium">
+              <input type="checkbox" name="identityRequired" defaultChecked={idOn} className="h-5 w-5 accent-brand-500" />
+              TC kimlik iste
+            </label>
+            <SubmitButton>Kaydet</SubmitButton>
+          </ActionForm>
+          <p className="mt-4 flex flex-wrap gap-2 text-xs">
+            <span className="chip">Doğrulanmış: {countOf("VERIFIED")}</span>
+            <Link href="/admin/kullanicilar?kimlik=PENDING" className="chip">Onay bekleyen: {countOf("PENDING")}</Link>
+            <span className="chip">Reddedilen: {countOf("REJECTED")}</span>
+            <span className="chip">Girilmemiş: {countOf("NONE")}</span>
+          </p>
+        </section>
+
         {/* NETGSM */}
         <section className="card p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
