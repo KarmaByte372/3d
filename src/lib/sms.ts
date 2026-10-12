@@ -1,8 +1,10 @@
 import "server-only";
+import { getSmsConfig } from "./integrations";
 
 /**
  * SMS gönderimi.
- * - netgsm: Netgsm REST v2. NETGSM_ENDPOINT="otp" (varsayılan) OTP servisini, "sms" normal SMS'i kullanır.
+ * Ayarlar admin → Entegrasyonlar'dan (yoksa .env'den) okunur.
+ * - netgsm: Netgsm REST v2. Uç "otp" (varsayılan) OTP servisini, "sms" normal SMS'i kullanır.
  * - log:    SMS gönderilmez, kod sunucu loguna yazılır (yalnızca geliştirme ve kurulum testi için).
  */
 export class SmsError extends Error {}
@@ -23,22 +25,17 @@ const NETGSM_ERRORS: Record<string, string> = {
   "101": "Netgsm sistem hatası",
 };
 
-export function smsProvider() {
-  return process.env.SMS_PROVIDER ?? "log";
-}
-
 export async function sendSms(phone: string, message: string): Promise<void> {
-  if (smsProvider() === "netgsm") return sendNetgsm(phone, message);
+  const cfg = await getSmsConfig();
+  if (cfg.provider === "netgsm") return sendNetgsm(phone, message, cfg);
   console.log(`[sms:log] ${phone} -> ${message}`);
 }
 
-async function sendNetgsm(phone: string, message: string) {
-  const user = process.env.NETGSM_USERCODE;
-  const pass = process.env.NETGSM_PASSWORD;
-  const header = process.env.NETGSM_MSGHEADER;
-  if (!user || !pass || !header) throw new SmsError("Netgsm ayarları eksik (NETGSM_USERCODE, NETGSM_PASSWORD, NETGSM_MSGHEADER)");
+async function sendNetgsm(phone: string, message: string, cfg: Awaited<ReturnType<typeof getSmsConfig>>) {
+  const { usercode: user, password: pass, msgheader: header } = cfg;
+  if (!user || !pass || !header) throw new SmsError("Netgsm ayarları eksik (kullanıcı kodu, şifre, mesaj başlığı)");
 
-  const otp = (process.env.NETGSM_ENDPOINT ?? "otp") === "otp";
+  const otp = cfg.endpoint === "otp";
   const url = `https://api.netgsm.com.tr/sms/rest/v2/${otp ? "otp" : "send"}`;
   const body = otp
     ? { msgheader: header, msg: message, no: phone }

@@ -186,10 +186,9 @@ fi
 echo " Loglar:         journalctl -u $UYG -f"
 if grep -q '^SMS_PROVIDER="log"' .env; then
   echo
-  echo " UYARI: SMS gönderimi kapalı (SMS_PROVIDER=log). Doğrulama kodları sadece loga yazılır:"
+  echo " NOT: SMS panelden ayarlanmadıysa doğrulama kodları sadece loga yazılır:"
   echo "        journalctl -u $UYG | grep sms:log"
-  echo "        Netgsm bilgilerini $DIZIN/.env dosyasına girip SMS_PROVIDER=\"netgsm\" yapın,"
-  echo "        sonra: systemctl restart $UYG"
+  echo "        Netgsm bilgilerini admin paneli -> Entegrasyonlar sayfasından girin."
 fi
 echo " Veritabanı:     $DIZIN/prisma/prod.db   Yüklenen dosyalar: $DIZIN/uploads"
 echo "=================================================================="

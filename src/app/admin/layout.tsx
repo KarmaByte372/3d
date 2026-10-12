@@ -19,6 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/yuklemeler", label: "Bakiye yüklemeleri", icon: "IconCard" },
         { href: "/admin/siparisler", label: "Siparişler", icon: "IconBox" },
         { href: "/admin/odemeler", label: "Çarşamba ödemeleri", icon: "IconCalendar" },
+        { href: "/admin/entegrasyonlar", label: "Entegrasyonlar", icon: "IconMessage" },
         { href: "/admin/ayarlar", label: "Ayarlar", icon: "IconSettings" },
       ]}
     >

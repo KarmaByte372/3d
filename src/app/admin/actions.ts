@@ -11,7 +11,11 @@ import { parseTL } from "@/lib/money";
 import { completeTopUp, rejectTopUp } from "@/lib/payments";
 import { markPayoutFailed, markPayoutPaid } from "@/lib/payouts";
 import { runWeeklyPayouts } from "@/lib/scheduler";
-import { updateSettings } from "@/lib/settings";
+import { getSettings, updateSettings } from "@/lib/settings";
+import { getSmsConfig, hasSecret, saveIntegration } from "@/lib/integrations";
+import { MailError, sendMail } from "@/lib/mail";
+import { normalizeTrMobile } from "@/lib/phone";
+import { sendSms, SmsError } from "@/lib/sms";
 import { changeBalance } from "@/lib/wallet";
 
 async function admin() {
@@ -223,6 +227,81 @@ export async function createAdminAction(_: ActionState, f: FormData): Promise<Ac
     await prisma.user.create({ data: { email, name, role: "ADMIN", passwordHash: await hashPassword(temp) } });
     return done("/admin/kullanicilar", `Yönetici oluşturuldu. Geçici şifre: ${temp} (ilk girişte Hesabım'dan değiştirilmeli)`);
   } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function saveSmsSettingsAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const provider = f.get("smsProvider") === "netgsm" ? "netgsm" : "log";
+    const values = {
+      smsProvider: provider,
+      netgsmUsercode: String(f.get("netgsmUsercode") ?? "").trim().slice(0, 50),
+      netgsmMsgheader: String(f.get("netgsmMsgheader") ?? "").trim().slice(0, 30),
+      netgsmEndpoint: f.get("netgsmEndpoint") === "sms" ? "sms" : "otp",
+    };
+    const password = String(f.get("netgsmPassword") ?? "");
+    const clear = f.get("netgsmPasswordClear") === "on";
+    if (provider === "netgsm") {
+      if (!values.netgsmUsercode || !values.netgsmMsgheader) throw new AppError("Netgsm için kullanıcı kodu ve mesaj başlığı gerekli.");
+      if (clear || (!password && !(await hasSecret("netgsmPassword")))) throw new AppError("Netgsm şifresi gerekli.");
+    }
+    await saveIntegration(values, { netgsmPassword: { value: password, clear } });
+    return done("/admin/entegrasyonlar", provider === "netgsm" ? "SMS ayarları kaydedildi. Test SMS'i göndererek kontrol edin." : "Kaydedildi. SMS gönderimi kapalı (kodlar loga yazılır).");
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function testSmsAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const phone = normalizeTrMobile(String(f.get("testPhone") ?? ""));
+    if (!phone) throw new AppError("Geçerli bir cep telefonu girin.");
+    const { siteName } = await getSettings();
+    await sendSms(phone, `${siteName} test mesaji. SMS ayarlariniz calisiyor.`.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ı/g, "i"));
+    const cfg = await getSmsConfig();
+    return { ok: cfg.provider === "netgsm" ? "Test SMS'i Netgsm'e iletildi. Telefonunuzu kontrol edin." : "SMS gönderimi kapalı: mesaj yalnızca sunucu loguna yazıldı." };
+  } catch (e) {
+    if (e instanceof SmsError) return { error: e.message };
+    return toActionError(e);
+  }
+}
+
+export async function saveSmtpSettingsAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const enabled = f.get("smtpEnabled") === "on";
+    const port = Number(f.get("smtpPort"));
+    const values = {
+      smtpEnabled: String(enabled),
+      smtpHost: String(f.get("smtpHost") ?? "").trim().slice(0, 200),
+      smtpPort: String(Number.isInteger(port) && port > 0 && port < 65536 ? port : 587),
+      smtpSecure: String(f.get("smtpSecure") === "on"),
+      smtpUser: String(f.get("smtpUser") ?? "").trim().slice(0, 200),
+      smtpFrom: String(f.get("smtpFrom") ?? "").trim().slice(0, 200),
+    };
+    if (enabled && (!values.smtpHost || !values.smtpFrom)) throw new AppError("SMTP sunucusu ve gönderen adresi gerekli.");
+    await saveIntegration(values, {
+      smtpPassword: { value: String(f.get("smtpPassword") ?? ""), clear: f.get("smtpPasswordClear") === "on" },
+    });
+    return done("/admin/entegrasyonlar", "SMTP ayarları kaydedildi.");
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function testMailAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const to = String(f.get("testEmail") ?? "").trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) throw new AppError("Geçerli bir e-posta girin.");
+    const { siteName } = await getSettings();
+    await sendMail(to, `${siteName} SMTP testi`, `Bu bir test e-postasıdır. ${siteName} SMTP ayarlarınız çalışıyor.`);
+    return { ok: `Test e-postası ${to} adresine gönderildi.` };
+  } catch (e) {
+    if (e instanceof MailError) return { error: `E-posta gönderilemedi: ${e.message}` };
     return toActionError(e);
   }
 }

@@ -91,12 +91,11 @@ Admin şifresi kurulumun sonunda **bir kez** ekrana yazılır.
 
 - `/admin/ayarlar` sayfasından şunları gir: site/marka adı, şirket bilgileri (yasal sayfalarda kullanılır) ve
   havale/EFT için banka bilgileri.
-- **SMS (Netgsm):** `/opt/baski3d/.env` dosyasını aç (`nano /opt/baski3d/.env`) ve şu ayarları gir:
-  `NETGSM_USERCODE`, `NETGSM_PASSWORD`, `NETGSM_MSGHEADER`. Ardından `SMS_PROVIDER="netgsm"` yap ve
-  `systemctl restart baski3d` ile servisi yeniden başlat. Netgsm panelinde API alt kullanıcısına sunucu IP'sinden
-  erişim izni ver.
-  SMS ayarlanmadan kayıt olanların doğrulama kodları sadece loga düşer; görmek için:
-  `journalctl -u baski3d | grep sms:log`
+- **SMS (Netgsm):** Admin panelinde **Entegrasyonlar** sayfasına gir. Gönderimi "Netgsm" yap; kullanıcı kodu, API
+  şifresi ve mesaj başlığını gir, kaydet. Ardından "Test SMS'i gönder" ile kendi numarana dene. Netgsm panelinde API
+  alt kullanıcısına sunucu IP'sinden erişim izni vermeyi unutma.
+  SMS ayarlanmadan kayıt olanların kodları sadece loga düşer: `journalctl -u baski3d | grep sms:log`
+- **SMTP (isteğe bağlı):** Aynı sayfadan girilip test e-postasıyla denenebilir.
 - Kartla ödeme kapalıdır (`PAYMENT_PROVIDER="none"`). iyzico veya PayTR entegrasyonu gelince açılacak.
 - Alan adı ve SSL olmadan site `http://IP` adresinden çalışır, ama şifreler şifrelenmeden gider.
   Gerçek kullanıcı almadan önce alan adı ve HTTPS kur.

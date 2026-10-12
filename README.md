@@ -25,7 +25,7 @@ açık profilinde (`/atolye/[id]`) görünür. Komisyon oranının nasıl belirl
 |---|---|---|
 | Müşteri | `/musteri` | Talepler, teklif karşılaştırma/kabul (atölye puanlarıyla), sipariş detayı ve mesajlaşma, teslim onayı, sorun bildirme, değerlendirme, bakiye yükleme (iadeler bakiyede kalır), bildirimler, Hesabım (şifre ve telefon değiştirme) |
 | İşletme | `/isletme` | Açık talepler (şehir/malzeme filtresi), teklif ver/güncelle/geri çek, sipariş detayı ve mesajlaşma, kargolama/iptal, kazanç ve ödemeler, profil ve IBAN, herkese açık profil, bildirimler, Hesabım |
-| Admin | `/admin` | Özet ve uyarılar (anlaşmazlık, havale), kullanıcılar (askıya alma, doğrulama, telefon durumu, bakiye düzeltme, geçici şifre, yeni yönetici), havale onayı, sipariş inceleme (mesajlar, para hareketleri, tamamla / iptal ve iade), çarşamba ödemeleri, ayarlar (komisyon, marka adı, şirket bilgileri, banka) |
+| Admin | `/admin` | Entegrasyonlar (Netgsm SMS, SMTP, test gönderimi), özet ve uyarılar (anlaşmazlık, havale), kullanıcılar (askıya alma, doğrulama, telefon durumu, bakiye düzeltme, geçici şifre, yeni yönetici), havale onayı, sipariş inceleme (mesajlar, para hareketleri, tamamla / iptal ve iade), çarşamba ödemeleri, ayarlar (komisyon, marka adı, şirket bilgileri, banka) |
 
 ## Kurulum
 
@@ -85,7 +85,16 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
   2. Sunucu IP'sine API erişim izni ver.
   3. Onaylı bir mesaj başlığı (gönderici adı) al.
   4. OTP için OTP SMS paketi tanımla.
-- `SMS_PROVIDER="log"` iken SMS gitmez, kod sunucu loguna yazılır (yalnızca geliştirme ve test için).
+- Netgsm ayarları **admin → Entegrasyonlar** sayfasından girilir ve "Test gönder" ile denenir. Şifre veritabanında
+  AES-256-GCM ile şifreli saklanır (anahtar `SESSION_SECRET`'tan türetilir; değişirse şifreler yeniden girilmeli).
+  Panelde girilmemiş alanlar için `.env` değerleri kullanılır.
+- Gönderim "Kapalı (log)" iken SMS gitmez, kod sunucu loguna yazılır (yalnızca geliştirme ve test için).
+
+## E-posta (SMTP)
+
+Admin → Entegrasyonlar'da SMTP sunucusu, port, SSL, kullanıcı, şifre ve gönderen adresi girilir ve test e-postası
+gönderilir. Yedek olarak hazır tutulur; şifre sıfırlama SMS ile yapılmaya devam eder. Kodda `sendMail()`
+(`src/lib/mail.ts`) ile kullanılabilir.
 - Model dosyaları `uploads/` altında (public değil) tutulur. Yalnızca talep sahibi, ilgili işletmeler ve admin indirebilir.
 
 ## Canlıya almadan önce yapılacaklar
