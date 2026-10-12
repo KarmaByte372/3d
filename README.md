@@ -23,9 +23,9 @@ açık profilinde (`/atolye/[id]`) görünür. Komisyon oranının nasıl belirl
 
 | Rol | Yol | Özellikler |
 |---|---|---|
-| Müşteri | `/musteri` | Talepler, teklif karşılaştırma/kabul (atölye puanlarıyla), sipariş detayı ve mesajlaşma, teslim onayı, sorun bildirme, değerlendirme, bakiye yükleme ve IBAN'a para çekme, bildirimler, Hesabım (şifre değiştirme) |
+| Müşteri | `/musteri` | Talepler, teklif karşılaştırma/kabul (atölye puanlarıyla), sipariş detayı ve mesajlaşma, teslim onayı, sorun bildirme, değerlendirme, bakiye yükleme (iadeler bakiyede kalır), bildirimler, Hesabım (şifre ve telefon değiştirme) |
 | İşletme | `/isletme` | Açık talepler (şehir/malzeme filtresi), teklif ver/güncelle/geri çek, sipariş detayı ve mesajlaşma, kargolama/iptal, kazanç ve ödemeler, profil ve IBAN, herkese açık profil, bildirimler, Hesabım |
-| Admin | `/admin` | Özet ve uyarılar (anlaşmazlık, havale, çekim), kullanıcılar (askıya alma, doğrulama, bakiye düzeltme, geçici şifre, yeni yönetici), havale onayı, para çekme talepleri, sipariş inceleme (mesajlar, para hareketleri, tamamla / iptal ve iade), çarşamba ödemeleri, ayarlar |
+| Admin | `/admin` | Özet ve uyarılar (anlaşmazlık, havale), kullanıcılar (askıya alma, doğrulama, telefon durumu, bakiye düzeltme, geçici şifre, yeni yönetici), havale onayı, sipariş inceleme (mesajlar, para hareketleri, tamamla / iptal ve iade), çarşamba ödemeleri, ayarlar (komisyon, marka adı, şirket bilgileri, banka) |
 
 ## Kurulum
 
@@ -66,6 +66,26 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
 - Oturum: imzalı JWT, httpOnly çerez. Şifreler bcrypt ile saklanır. Askıya alınan hesap anında erişimini kaybeder.
   Şifre değişince ya da admin sıfırlayınca diğer cihazlardaki oturumlar kapanır (`sessionVersion`).
 - Giriş denemeleri sınırlıdır: hesap başına 15 dakikada 5, IP başına 30 hatalı deneme.
+- **Oturum IP'ye bağlıdır:** IP adresi değişince (ör. Wi-Fi'dan mobil veriye geçiş) oturum kapanır ve kullanıcı yeniden
+  giriş yapar. Mobil operatörler IP'yi oturum sırasında da değiştirebildiği için mobil kullanıcılar daha sık çıkış
+  görebilir. `SESSION_BIND_IP="false"` ile kapatılabilir.
+
+## Telefon doğrulama ve SMS (Netgsm)
+
+- Kayıtta cep telefonu zorunludur. Numara SMS koduyla doğrulanmadan müşteri ve atölye panellerine girilemez
+  (`/dogrula`). Bir numara yalnızca bir hesapta doğrulanabilir.
+- **Şifremi unuttum** (`/sifremi-unuttum`): Kayıtlı numaraya SMS kodu gider; kod ve yeni şifreyle sıfırlanır,
+  tüm oturumlar kapanır. Kayıtlı olmayan numara için de aynı ekran gösterilir.
+- Telefon değiştirme Hesabım'dan yapılır. Yeni numara doğrulanana kadar eski numara geçerli kalır.
+- Kodlar 6 hanelidir, 5 dakika geçerlidir ve veritabanında yalnızca HMAC özeti tutulur. En fazla 5 hatalı deneme
+  yapılabilir. Yeni kod için 60 saniye beklenir. Numara başına saatte 5, IP başına saatte 20 SMS gönderilebilir.
+- Gönderim Netgsm REST v2 üzerinden yapılır: `NETGSM_ENDPOINT="otp"` OTP servisini (`/sms/rest/v2/otp`),
+  `"sms"` normal SMS'i (`/sms/rest/v2/send`) kullanır. Netgsm tarafında yapılacaklar:
+  1. API alt kullanıcısı oluştur.
+  2. Sunucu IP'sine API erişim izni ver.
+  3. Onaylı bir mesaj başlığı (gönderici adı) al.
+  4. OTP için OTP SMS paketi tanımla.
+- `SMS_PROVIDER="log"` iken SMS gitmez, kod sunucu loguna yazılır (yalnızca geliştirme ve test için).
 - Model dosyaları `uploads/` altında (public değil) tutulur. Yalnızca talep sahibi, ilgili işletmeler ve admin indirebilir.
 
 ## Canlıya almadan önce yapılacaklar
@@ -80,6 +100,7 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
   hizmeti sayılabilir. Bir ödeme kuruluşunun pazaryeri çözümü (alt üye işyeri, ör. iyzico veya PayTR
   Pazaryeri) kullanılması veya hukuki görüş alınması önerilir. KVKK metinleri, mesafeli satış sözleşmesi ve
   komisyon faturalandırması (e-fatura) da eklenmelidir.
-- **E-posta gönderimi yok:** "Şifremi unuttum" bağlantısı, e-posta doğrulama ve e-posta bildirimleri için bir SMTP
-  servisi gerekir. O zamana kadar şifresini unutan kullanıcıya admin, Kullanıcılar sayfasından geçici şifre verir.
-- `/kosullar` ve `/kvkk` sayfaları taslaktır. Şirket bilgileriyle doldurulup bir hukukçuya kontrol ettirilmeli.
+- **Yasal metinler** (`/kullanim-sartlari`, `/gizlilik`, `/kvkk`) şirket bilgilerini admin → Ayarlar'dan alır.
+  Yayından önce bir hukukçuya kontrol ettirilmeli.
+- **İadeler yalnızca bakiyeye yapılır, IBAN'a aktarılmaz.** Tüketiciye yapılan iadelerin ödeme aracına geri
+  yapılması gerekip gerekmediği ve bakiyenin elektronik para sayılıp sayılmadığı konusunda hukuki görüş alınmalı.

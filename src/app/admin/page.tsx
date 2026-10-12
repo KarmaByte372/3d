@@ -23,10 +23,7 @@ export default async function AdminHome() {
       prisma.payout.aggregate({ where: { status: "PENDING" }, _sum: { amount: true }, _count: true }),
       prisma.order.aggregate({ where: { status: "COMPLETED" }, _sum: { amount: true } }),
     ]);
-  const [disputes, pendingWithdrawals] = await Promise.all([
-    prisma.order.count({ where: { disputed: true, status: { in: ["IN_PROGRESS", "SHIPPED"] } } }),
-    prisma.withdrawal.count({ where: { status: "PENDING" } }),
-  ]);
+  const disputes = await prisma.order.count({ where: { disputed: true, status: { in: ["IN_PROGRESS", "SHIPPED"] } } });
 
   return (
     <>
@@ -37,11 +34,10 @@ export default async function AdminHome() {
           <Link href="/admin/odemeler" className="link">Ödemelere git →</Link>
         </div>
       )}
-      {(disputes > 0 || pendingWithdrawals > 0 || pendingTopUps > 0) && (
+      {(disputes > 0 || pendingTopUps > 0) && (
         <div className="mb-5 flex flex-wrap gap-2">
           {disputes > 0 && <Link href="/admin/siparisler?durum=DISPUTED" className="chip border-amber-300 bg-amber-50 text-amber-800">⚠ {disputes} anlaşmazlık bekliyor</Link>}
           {pendingTopUps > 0 && <Link href="/admin/yuklemeler" className="chip">{pendingTopUps} havale onayı</Link>}
-          {pendingWithdrawals > 0 && <Link href="/admin/cekimler" className="chip">{pendingWithdrawals} para çekme talebi</Link>}
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

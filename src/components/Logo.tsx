@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSettings } from "@/lib/settings";
 
 /** İzometrik, katmanlı küp: filament renkleriyle basılmış bir parça. */
 export function LogoMark({ className = "h-8 w-8" }: { className?: string }) {
@@ -31,12 +32,17 @@ export function LogoMark({ className = "h-8 w-8" }: { className?: string }) {
   );
 }
 
-export function Logo({ dark = false, href = "/" }: { dark?: boolean; href?: string }) {
+/** Marka adı admin ayarlarından gelir; sondaki "3D" vb. ek filament renginde vurgulanır. */
+export async function Logo({ dark = false, href = "/" }: { dark?: boolean; href?: string }) {
+  const { siteName } = await getSettings();
+  const m = siteName.match(/^(.*?)(\d+[A-Za-z]*)$/);
+  const [head, tail] = m && m[1] ? [m[1], m[2]] : [siteName, ""];
   return (
     <Link href={href} className="group inline-flex items-center gap-2.5">
       <LogoMark className="h-8 w-8 transition-transform duration-500 group-hover:rotate-[8deg]" />
       <span className={`font-display text-lg font-bold tracking-tight ${dark ? "text-white" : "text-ink-900"}`}>
-        Baskı<span className="text-filament">3D</span>
+        {head}
+        {tail && <span className="text-filament">{tail}</span>}
       </span>
     </Link>
   );

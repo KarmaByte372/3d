@@ -31,10 +31,6 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
               <label className="label" htmlFor="city">Şehir</label>
               <input className="input" id="city" name="city" defaultValue={b.city} required />
             </div>
-            <div>
-              <label className="label" htmlFor="phone">Telefon</label>
-              <input className="input" id="phone" name="phone" defaultValue={user.phone ?? ""} />
-            </div>
           </div>
           <div>
             <label className="label" htmlFor="description">Tanıtım</label>

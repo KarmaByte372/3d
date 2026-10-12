@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 
 export async function resetDb() {
+  await prisma.phoneCode.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.message.deleteMany();
   await prisma.review.deleteMany();

@@ -14,10 +14,8 @@ import {
   submitReview,
 } from "@/lib/marketplace";
 import { hit, isLimited, reset } from "@/lib/rate-limit";
-import { markWithdrawalPaid, rejectWithdrawal, requestWithdrawal } from "@/lib/withdrawals";
 import { makeBusiness, makeCustomer, makeRequest, resetDb } from "./helpers";
 
-const IBAN = "TR330006100519786457841326";
 const balance = async (id: string) => (await prisma.user.findUniqueOrThrow({ where: { id } })).balance;
 
 async function setupOrder(price = 50000) {
@@ -60,33 +58,6 @@ describe("giriş deneme sınırı", () => {
     for (let i = 0; i < 5; i++) hit(k, 1000, 0);
     expect(isLimited(k, 5, 1000, 500)).toBe(true);
     expect(isLimited(k, 5, 1000, 1500)).toBe(false);
-  });
-});
-
-describe("para çekme", () => {
-  it("talep bakiyeden düşer; red bakiyeye iade eder", async () => {
-    const c = await makeCustomer(30000);
-    const w = await requestWithdrawal(c.id, 20000, IBAN, "Ayşe Demir");
-    expect(await balance(c.id)).toBe(10000);
-    await expect(requestWithdrawal(c.id, 5000, IBAN, "Ayşe Demir")).rejects.toThrow("Bekleyen");
-    await rejectWithdrawal(w.id, "IBAN sahibi farklı");
-    expect(await balance(c.id)).toBe(30000);
-    await expect(markWithdrawalPaid(w.id, "")).rejects.toThrow();
-  });
-
-  it("yetersiz bakiye ve geçersiz IBAN reddedilir", async () => {
-    const c = await makeCustomer(10000);
-    await expect(requestWithdrawal(c.id, 20000, IBAN, "Ayşe")).rejects.toThrow("Yetersiz");
-    await expect(requestWithdrawal(c.id, 6000, "TR12", "Ayşe")).rejects.toThrow("IBAN");
-    expect(await prisma.withdrawal.count()).toBe(0);
-  });
-
-  it("ödendi işaretlenince bakiye değişmez", async () => {
-    const c = await makeCustomer(30000);
-    const w = await requestWithdrawal(c.id, 30000, IBAN, "Ayşe Demir");
-    await markWithdrawalPaid(w.id, "DK-1");
-    expect(await balance(c.id)).toBe(0);
-    expect((await prisma.withdrawal.findUniqueOrThrow({ where: { id: w.id } })).status).toBe("PAID");
   });
 });
 

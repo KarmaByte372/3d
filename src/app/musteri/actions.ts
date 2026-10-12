@@ -10,7 +10,6 @@ import { saveModelFile } from "@/lib/files";
 import { acceptQuote, completeOrder } from "@/lib/marketplace";
 import { parseTL } from "@/lib/money";
 import { createBankTransferTopUp, startCardTopUp } from "@/lib/payments";
-import { requestWithdrawal } from "@/lib/withdrawals";
 
 const requestSchema = z.object({
   title: z.string().trim().min(3, "Başlık en az 3 karakter olmalı.").max(120),
@@ -128,19 +127,6 @@ export async function bankTopUpAction(_: ActionState, formData: FormData): Promi
     const t = await createBankTransferTopUp(user.id, amount);
     revalidatePath("/musteri/bakiye");
     return { ok: `Bildirim oluşturuldu. Havale açıklamasına ${t.reference} kodunu yazın.` };
-  } catch (e) {
-    return toActionError(e);
-  }
-}
-
-export async function withdrawAction(_: ActionState, formData: FormData): Promise<ActionState> {
-  try {
-    const user = await requireUser("CUSTOMER");
-    const amount = parseTL(String(formData.get("amount") ?? ""));
-    if (amount === null) return { error: "Geçerli bir tutar girin." };
-    await requestWithdrawal(user.id, amount, String(formData.get("iban") ?? ""), String(formData.get("ibanHolder") ?? ""));
-    revalidatePath("/musteri/bakiye");
-    return { ok: "Çekim talebin alındı. Yönetici onayından sonra IBAN'ına gönderilecek." };
   } catch (e) {
     return toActionError(e);
   }

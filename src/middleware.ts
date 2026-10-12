@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { HOME_BY_ROLE, SESSION_COOKIE, verifySession } from "@/lib/session";
+import { bindSessionToIp, clientIp } from "@/lib/ip";
 
 const AREAS: Record<string, string> = { "/musteri": "CUSTOMER", "/isletme": "BUSINESS", "/admin": "ADMIN" };
 
@@ -13,6 +14,14 @@ export async function middleware(req: NextRequest) {
     const url = new URL("/giris", req.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
+  }
+  if (bindSessionToIp() && session.ip !== clientIp(req.headers)) {
+    const url = new URL("/giris", req.url);
+    url.searchParams.set("sebep", "ag");
+    url.searchParams.set("next", pathname);
+    const res = NextResponse.redirect(url);
+    res.cookies.delete(SESSION_COOKIE);
+    return res;
   }
   if (session.role !== AREAS[area]) {
     return NextResponse.redirect(new URL(HOME_BY_ROLE[session.role] ?? "/", req.url));

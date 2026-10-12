@@ -237,9 +237,10 @@ export default async function Home() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-ink-400">
           <Logo />
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="/kosullar" className="hover:text-ink-700">Kullanım koşulları</Link>
+            <Link href="/kullanim-sartlari" className="hover:text-ink-700">Kullanım Şartları</Link>
+            <Link href="/gizlilik" className="hover:text-ink-700">Gizlilik Politikası</Link>
             <Link href="/kvkk" className="hover:text-ink-700">KVKK</Link>
-            <span>© {new Date().getFullYear()} Baskı3D</span>
+            <span>© {new Date().getFullYear()} {settings.companyTitle}</span>
           </div>
         </div>
       </footer>

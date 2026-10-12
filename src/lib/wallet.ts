@@ -7,7 +7,6 @@ type EntryInput = {
   orderId?: string;
   topUpId?: string;
   payoutId?: string;
-  withdrawalId?: string;
 };
 
 /**

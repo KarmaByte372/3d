@@ -11,20 +11,25 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  passwordHash   String
-  name           String
-  phone          String?
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String
+  /// Türk cep numarası, 10 hane (5XXXXXXXXX)
+  phone           String?
+  /// SMS ile doğrulandığı an; boşsa kullanıcı panele giremez (adminler hariç)
+  phoneVerifiedAt DateTime?
+  /// Telefon değiştirme sürecinde doğrulama bekleyen yeni numara
+  pendingPhone    String?
   /// CUSTOMER | BUSINESS | ADMIN
-  role           String
+  role            String
   /// ACTIVE | SUSPENDED
-  status         String   @default("ACTIVE")
+  status          String    @default("ACTIVE")
   /// Müşteri için harcanabilir bakiye, işletme için ödenmeyi bekleyen kazanç (kuruş)
-  balance        Int      @default(0)
+  balance         Int       @default(0)
   /// Şifre değişince/sıfırlanınca artar; eski oturumlar geçersiz olur
-  sessionVersion Int      @default(0)
-  createdAt      DateTime @default(now())
+  sessionVersion  Int       @default(0)
+  createdAt       DateTime  @default(now())
 
   business       BusinessProfile?
   requests       PrintRequest[]   @relation("CustomerRequests")
@@ -260,7 +265,7 @@ model Review {
   @@index([businessId, createdAt])
 }
 
-/// Müşterinin kullanılmayan bakiyesini IBAN'ına çekme talebi
+/// KULLANILMIYOR: IBAN'a para çekme kaldırıldı (iadeler bakiyede kalır). Tablo eski kayıtlar için tutuluyor.
 model Withdrawal {
   id            String    @id @default(cuid())
   userId        String
@@ -276,4 +281,22 @@ model Withdrawal {
   processedAt   DateTime?
 
   ledger LedgerEntry[]
+}
+
+/// SMS doğrulama kodları (kodun kendisi değil, HMAC özeti saklanır)
+model PhoneCode {
+  id         String    @id @default(cuid())
+  phone      String
+  /// VERIFY | RESET
+  purpose    String
+  userId     String?
+  codeHash   String
+  attempts   Int       @default(0)
+  ip         String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, purpose, createdAt])
+  @@index([ip, createdAt])
 }

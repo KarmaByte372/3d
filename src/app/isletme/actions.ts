@@ -69,7 +69,6 @@ const profileSchema = z.object({
   description: z.string().trim().max(3000).optional(),
   technologies: z.string().trim().max(200).optional(),
   materials: z.string().trim().max(300).optional(),
-  phone: z.string().trim().max(20).optional(),
   iban: z.string().trim().max(40).optional(),
   ibanHolder: z.string().trim().max(150).optional(),
 });
@@ -89,7 +88,6 @@ export async function updateProfileAction(_: ActionState, formData: FormData): P
     }
 
     await prisma.$transaction([
-      prisma.user.update({ where: { id: user.id }, data: { phone: d.phone || null } }),
       prisma.businessProfile.update({
         where: { userId: user.id },
         data: {

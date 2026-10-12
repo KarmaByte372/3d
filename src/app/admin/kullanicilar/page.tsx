@@ -4,6 +4,7 @@ import { PageTitle } from "@/components/Shell";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/dates";
 import { formatIban } from "@/lib/iban";
+import { formatPhone } from "@/lib/phone";
 import { formatTL } from "@/lib/money";
 import { adjustBalanceAction, createAdminAction, resetUserPasswordAction, setUserStatusAction, toggleVerifiedAction } from "../actions";
 
@@ -12,7 +13,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   const users = await prisma.user.findMany({
     where: {
       ...(rol ? { role: rol } : {}),
-      ...(q ? { OR: [{ email: { contains: q } }, { name: { contains: q } }, { business: { companyName: { contains: q } } }] } : {}),
+      ...(q ? { OR: [{ email: { contains: q } }, { name: { contains: q } }, { phone: { contains: q.replace(/\D/g, "").replace(/^0/, "") || q } }, { business: { companyName: { contains: q } } }] } : {}),
     },
     orderBy: { createdAt: "desc" },
     take: 100,
@@ -23,7 +24,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
     <>
       <PageTitle eyebrow="Yönetim">Kullanıcılar</PageTitle>
       <form className="mb-4 flex flex-wrap gap-2">
-        <input className="input max-w-xs" name="q" placeholder="Ad, e-posta, işletme" defaultValue={q} />
+        <input className="input max-w-xs" name="q" placeholder="Ad, e-posta, telefon, işletme" defaultValue={q} />
         <select className="input max-w-[10rem]" name="rol" defaultValue={rol ?? ""}>
           <option value="">Tümü</option>
           <option value="CUSTOMER">Müşteri</option>
@@ -60,7 +61,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
             <div className="mt-4 grid gap-4 border-t border-ink-100 pt-4 text-sm md:grid-cols-3">
               <div className="space-y-1">
                 <p>Ad: {u.name}</p>
-                <p>Telefon: {u.phone ?? "—"}</p>
+                <p>Telefon: {formatPhone(u.phone)} {u.phoneVerifiedAt ? <span className="text-emerald-700">✓ doğrulandı</span> : <span className="text-amber-700">doğrulanmadı</span>}</p>
                 <p>Kayıt: {formatDateTime(u.createdAt)}</p>
                 {u.business && (
                   <>

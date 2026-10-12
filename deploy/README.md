@@ -89,7 +89,14 @@ Admin şifresi kurulumun sonunda **bir kez** ekrana yazılır.
 
 ## Kurulumdan sonra
 
-- `/admin/ayarlar` sayfasından havale/EFT için banka bilgilerini gir.
+- `/admin/ayarlar` sayfasından şunları gir: site/marka adı, şirket bilgileri (yasal sayfalarda kullanılır) ve
+  havale/EFT için banka bilgileri.
+- **SMS (Netgsm):** `/opt/baski3d/.env` dosyasını aç (`nano /opt/baski3d/.env`) ve şu ayarları gir:
+  `NETGSM_USERCODE`, `NETGSM_PASSWORD`, `NETGSM_MSGHEADER`. Ardından `SMS_PROVIDER="netgsm"` yap ve
+  `systemctl restart baski3d` ile servisi yeniden başlat. Netgsm panelinde API alt kullanıcısına sunucu IP'sinden
+  erişim izni ver.
+  SMS ayarlanmadan kayıt olanların doğrulama kodları sadece loga düşer; görmek için:
+  `journalctl -u baski3d | grep sms:log`
 - Kartla ödeme kapalıdır (`PAYMENT_PROVIDER="none"`). iyzico veya PayTR entegrasyonu gelince açılacak.
 - Alan adı ve SSL olmadan site `http://IP` adresinden çalışır, ama şifreler şifrelenmeden gider.
   Gerçek kullanıcı almadan önce alan adı ve HTTPS kur.

@@ -1,24 +1,71 @@
-import { LegalPage } from "@/components/LegalPage";
+import { LegalPage, val } from "@/components/LegalPage";
 
-export const metadata = { title: "KVKK Aydınlatma Metni · Baskı3D" };
+export const metadata = { title: "KVKK Aydınlatma Metni" };
+export const dynamic = "force-dynamic";
 
-export default function Kvkk() {
+export default function KvkkPage() {
   return (
-    <LegalPage title="KVKK Aydınlatma Metni" updated="Ekim 2026">
-      <p>6698 sayılı Kişisel Verilerin Korunması Kanunu (&quot;KVKK&quot;) uyarınca, veri sorumlusu sıfatıyla [Şirket unvanı] olarak kişisel verilerinizi aşağıda açıklanan kapsamda işliyoruz.</p>
-      <h2>İşlenen veriler</h2>
-      <ul>
-        <li>Kimlik ve iletişim: ad soyad, e-posta, telefon</li>
-        <li>Atölyeler için: işletme adı, vergi/TC kimlik no, şehir, IBAN ve hesap sahibi</li>
-        <li>İşlem: talepler, yüklenen model dosyaları, teklifler, siparişler, mesajlar, değerlendirmeler, bakiye hareketleri</li>
-        <li>Güvenlik: oturum bilgileri ve giriş denemeleri için IP adresi</li>
-      </ul>
-      <h2>Amaçlar ve hukuki sebepler</h2>
-      <p>Verileriniz; üyelik ve sözleşmenin kurulması ve ifası (KVKK m.5/2-c), hukuki yükümlülüklerin yerine getirilmesi (m.5/2-ç) ve meşru menfaat (m.5/2-f) kapsamında; hizmetin sunulması, ödemelerin yapılması, anlaşmazlıkların çözülmesi ve güvenliğin sağlanması amacıyla işlenir.</p>
-      <h2>Aktarım</h2>
-      <p>Verileriniz yalnızca hizmetin gerektirdiği ölçüde; sipariş tarafı olan müşteri veya atölyeyle, ödeme kuruluşları ve bankalarla ve yasal olarak yetkili kurumlarla paylaşılır.</p>
-      <h2>Haklarınız</h2>
-      <p>KVKK m.11 kapsamında verilerinize erişme, düzeltilmesini veya silinmesini isteme ve itiraz etme haklarına sahipsiniz. Başvurularınızı [iletişim e-postası] adresine iletebilirsiniz.</p>
+    <LegalPage title="KVKK Aydınlatma Metni" updated="Ekim 2026" path="/kvkk">
+      {(s) => (
+        <>
+          <p>
+            6698 sayılı Kişisel Verilerin Korunması Kanunu (&quot;KVKK&quot;) uyarınca, veri sorumlusu sıfatıyla {val(s.companyTitle, "şirket unvanı")}{" "}
+            (&quot;Şirket&quot;) olarak, {s.siteName} platformu kapsamında işlenen kişisel verileriniz hakkında sizi bilgilendiririz.
+          </p>
+
+          <h2>1. İşlenen kişisel veriler</h2>
+          <ul>
+            <li><strong>Kimlik:</strong> ad soyad; atölyeler için vergi/TC kimlik numarası</li>
+            <li><strong>İletişim:</strong> e-posta adresi, cep telefonu numarası</li>
+            <li><strong>Finans:</strong> bakiye hareketleri; atölyeler için IBAN ve hesap sahibi</li>
+            <li><strong>Müşteri işlem:</strong> talepler, model dosyaları, teklifler, siparişler, mesajlar, değerlendirmeler</li>
+            <li><strong>İşlem güvenliği:</strong> IP adresi, oturum bilgileri, SMS doğrulama kayıtları, giriş denemeleri</li>
+          </ul>
+
+          <h2>2. İşleme amaçları ve hukuki sebepler</h2>
+          <ul>
+            <li>Üyelik sözleşmesinin kurulması ve ifası, siparişlerin yürütülmesi, ödemelerin yapılması (KVKK m.5/2-c)</li>
+            <li>Telefon numarasının doğrulanması ve SMS ile şifre sıfırlama, hesap güvenliğinin sağlanması (m.5/2-c ve m.5/2-f)</li>
+            <li>Vergi ve ticaret mevzuatından doğan saklama ve bildirim yükümlülükleri (m.5/2-ç)</li>
+            <li>Anlaşmazlıkların çözümü ve hakların tesisi, kullanılması, korunması (m.5/2-e)</li>
+            <li>Dolandırıcılığın ve kötüye kullanımın önlenmesi (m.5/2-f, meşru menfaat)</li>
+          </ul>
+
+          <h2>3. Aktarım</h2>
+          <p>Kişisel verileriniz yukarıdaki amaçlarla sınırlı olarak şu alıcılara aktarılabilir:</p>
+          <ul>
+            <li>Siparişin karşı tarafı olan müşteri veya atölye</li>
+            <li>SMS gönderimi için Netgsm İletişim ve Bilgi Teknolojileri A.Ş. (yalnızca telefon numarası ve mesaj metni)</li>
+            <li>Ödeme kuruluşları ve bankalar</li>
+            <li>Sunucu ve barındırma hizmeti sağlayıcıları</li>
+            <li>Kanunen yetkili kamu kurum ve kuruluşları</li>
+          </ul>
+
+          <h2>4. Toplama yöntemi</h2>
+          <p>
+            Kişisel verileriniz; kayıt, profil ve sipariş formları, Platform üzerindeki yazışmalar ve oturum açma/SMS doğrulama gibi işlemler sırasında
+            elektronik ortamda otomatik yollarla toplanır.
+          </p>
+
+          <h2>5. Haklarınız (KVKK m.11)</h2>
+          <ul>
+            <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme ve işlenmişse bilgi talep etme</li>
+            <li>İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme</li>
+            <li>Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme</li>
+            <li>Eksik veya yanlış işlenmişse düzeltilmesini, şartları oluştuğunda silinmesini veya yok edilmesini isteme</li>
+            <li>Bu işlemlerin aktarıldığı üçüncü kişilere bildirilmesini isteme</li>
+            <li>Otomatik sistemlerle analiz sonucu aleyhinize bir sonuç çıkmasına itiraz etme</li>
+            <li>Kanuna aykırı işleme nedeniyle zarara uğramanız halinde zararın giderilmesini talep etme</li>
+          </ul>
+
+          <h2>6. Başvuru</h2>
+          <p>
+            Haklarınıza ilişkin taleplerinizi, kimliğinizi doğrulayan bilgilerle birlikte {val(s.companyEmail, "e-posta")} adresine
+            {s.companyKep && <> veya {s.companyKep} KEP adresine</>} ya da {val(s.companyAddress, "adres")} adresine yazılı olarak iletebilirsiniz.
+            Başvurular en geç 30 gün içinde ücretsiz olarak sonuçlandırılır.
+          </p>
+        </>
+      )}
     </LegalPage>
   );
 }

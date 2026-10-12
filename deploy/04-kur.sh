@@ -80,6 +80,17 @@ CRON_SECRET="$(openssl rand -hex 24)"
 COOKIE_SECURE="false"
 ENV
 fi
+# Sonradan eklenen ayarlar: güncellemede mevcut .env'ye eksikse eklenir
+grep -q '^SMS_PROVIDER=' .env || cat >> .env <<'ENV'
+
+# SMS: Netgsm bilgilerini girip SMS_PROVIDER="netgsm" yapın, sonra: systemctl restart baski3d
+SMS_PROVIDER="log"
+NETGSM_USERCODE=""
+NETGSM_PASSWORD=""
+NETGSM_MSGHEADER=""
+NETGSM_ENDPOINT="otp"
+ENV
+grep -q '^SESSION_BIND_IP=' .env || echo 'SESSION_BIND_IP="true"' >> .env
 chmod 600 .env
 
 adim "Bağımlılıklar, veritabanı ve derleme"
@@ -173,5 +184,12 @@ if [ "$ILK_KURULUM" -eq 1 ]; then
   echo " Admin şifre:    $ADMIN_SIFRE   (bir yere kaydedin, tekrar gösterilmez)"
 fi
 echo " Loglar:         journalctl -u $UYG -f"
+if grep -q '^SMS_PROVIDER="log"' .env; then
+  echo
+  echo " UYARI: SMS gönderimi kapalı (SMS_PROVIDER=log). Doğrulama kodları sadece loga yazılır:"
+  echo "        journalctl -u $UYG | grep sms:log"
+  echo "        Netgsm bilgilerini $DIZIN/.env dosyasına girip SMS_PROVIDER=\"netgsm\" yapın,"
+  echo "        sonra: systemctl restart $UYG"
+fi
 echo " Veritabanı:     $DIZIN/prisma/prod.db   Yüklenen dosyalar: $DIZIN/uploads"
 echo "=================================================================="

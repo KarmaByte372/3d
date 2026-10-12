@@ -1,10 +1,12 @@
 import { changePasswordAction, updateAccountAction } from "@/app/hesap-actions";
+import { changePhoneAction } from "@/app/dogrula/actions";
+import { formatPhone } from "@/lib/phone";
 import { ActionForm, SubmitButton } from "./ActionForm";
 import { IconShield, IconUser } from "./Icons";
 import { PageTitle } from "./Shell";
 import { formatDateTime } from "@/lib/dates";
 
-type U = { name: string; email: string; phone: string | null; createdAt: Date };
+type U = { name: string; email: string; phone: string | null; phoneVerifiedAt: Date | null; pendingPhone: string | null; createdAt: Date };
 
 export function AccountPage({ user }: { user: U }) {
   return (
@@ -22,12 +24,30 @@ export function AccountPage({ user }: { user: U }) {
               <label className="label" htmlFor="acc-name">Ad soyad</label>
               <input className="input" id="acc-name" name="name" defaultValue={user.name} required />
             </div>
-            <div>
-              <label className="label" htmlFor="acc-phone">Telefon</label>
-              <input className="input" id="acc-phone" name="phone" type="tel" defaultValue={user.phone ?? ""} />
-            </div>
             <SubmitButton>Kaydet</SubmitButton>
           </ActionForm>
+        </div>
+        <div className="card p-6 lg:col-span-2">
+          <h2 className="mb-1 text-lg font-semibold">Cep telefonu</h2>
+          <p className="mb-4 text-sm text-ink-500">
+            {user.phoneVerifiedAt ? (
+              <>
+                <strong className="text-ink-800">{formatPhone(user.phone)}</strong>
+                <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">SMS ile doğrulandı</span>
+              </>
+            ) : (
+              "Doğrulanmış numara yok."
+            )}
+            {user.pendingPhone && <> · Doğrulama bekleyen yeni numara: {formatPhone(user.pendingPhone)} (<a href="/dogrula" className="link">doğrula</a>)</>}
+          </p>
+          <ActionForm action={changePhoneAction} className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[14rem] flex-1">
+              <label className="label" htmlFor="new-phone">Yeni numara</label>
+              <input className="input" id="new-phone" name="phone" type="tel" inputMode="tel" placeholder="05XX XXX XX XX" required />
+            </div>
+            <SubmitButton className="btn-secondary">SMS kodu gönder</SubmitButton>
+          </ActionForm>
+          <p className="mt-2 text-xs text-ink-400">Yeni numara SMS koduyla doğrulanana kadar mevcut numaran geçerli kalır.</p>
         </div>
         <div className="card p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><IconShield className="h-5 w-5 text-brand-600" /> Şifre değiştir</h2>

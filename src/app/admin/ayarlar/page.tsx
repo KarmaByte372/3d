@@ -14,6 +14,52 @@ export default async function AdminSettings() {
       <PageTitle eyebrow="Yönetim">Ayarlar</PageTitle>
       <div className="card max-w-3xl">
         <ActionForm action={updateSettingsAction} className="space-y-6">
+          <fieldset className="grid gap-4 sm:grid-cols-2">
+            <legend className="mb-2 font-semibold">Marka ve şirket bilgileri</legend>
+            <div>
+              <label className="label" htmlFor="siteName">Site / marka adı</label>
+              <input className="input" id="siteName" name="siteName" defaultValue={s.siteName} required maxLength={40} />
+              <p className="mt-1 text-xs text-ink-400">Logo, sayfa başlıkları ve SMS metinlerinde görünür. SMS&apos;lerde Türkçe karakterler sadeleştirilir.</p>
+            </div>
+            <div>
+              <label className="label" htmlFor="companyTitle">Şirket unvanı (tam)</label>
+              <input className="input" id="companyTitle" name="companyTitle" defaultValue={s.companyTitle} required placeholder="Digituva Yazılım Ltd. Şti." />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label" htmlFor="companyAddress">Adres</label>
+              <input className="input" id="companyAddress" name="companyAddress" defaultValue={s.companyAddress} />
+            </div>
+            <div>
+              <label className="label" htmlFor="companyTaxOffice">Vergi dairesi</label>
+              <input className="input" id="companyTaxOffice" name="companyTaxOffice" defaultValue={s.companyTaxOffice} />
+            </div>
+            <div>
+              <label className="label" htmlFor="companyTaxNumber">Vergi no</label>
+              <input className="input" id="companyTaxNumber" name="companyTaxNumber" defaultValue={s.companyTaxNumber} />
+            </div>
+            <div>
+              <label className="label" htmlFor="companyMersis">MERSİS no</label>
+              <input className="input" id="companyMersis" name="companyMersis" defaultValue={s.companyMersis} />
+            </div>
+            <div>
+              <label className="label" htmlFor="companyKep">KEP adresi</label>
+              <input className="input" id="companyKep" name="companyKep" defaultValue={s.companyKep} />
+            </div>
+            <div>
+              <label className="label" htmlFor="companyEmail">İletişim e-postası</label>
+              <input className="input" id="companyEmail" name="companyEmail" type="email" defaultValue={s.companyEmail} />
+            </div>
+            <div>
+              <label className="label" htmlFor="companyPhone">İletişim telefonu</label>
+              <input className="input" id="companyPhone" name="companyPhone" defaultValue={s.companyPhone} placeholder="0850 …" />
+            </div>
+            <p className="text-xs text-ink-400 sm:col-span-2">
+              Bu bilgiler <a href="/kullanim-sartlari" target="_blank" className="link">Kullanım Şartları</a>,{" "}
+              <a href="/gizlilik" target="_blank" className="link">Gizlilik Politikası</a> ve{" "}
+              <a href="/kvkk" target="_blank" className="link">KVKK</a> sayfalarında kullanılır.
+            </p>
+          </fieldset>
+
           <fieldset className="space-y-3">
             <legend className="font-semibold">Komisyon</legend>
             <div className="max-w-xs">

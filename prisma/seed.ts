@@ -19,7 +19,7 @@ async function main() {
     const hash = await bcrypt.hash("demo12345", 12);
     await prisma.user.upsert({
       where: { email: "musteri@demo.tr" },
-      create: { email: "musteri@demo.tr", name: "Ayşe Demir", role: "CUSTOMER", passwordHash: hash },
+      create: { email: "musteri@demo.tr", name: "Ayşe Demir", role: "CUSTOMER", passwordHash: hash, phone: "5550000001", phoneVerifiedAt: new Date() },
       update: {},
     });
     await prisma.user.upsert({
@@ -29,6 +29,8 @@ async function main() {
         name: "Mehmet Yılmaz",
         role: "BUSINESS",
         passwordHash: hash,
+        phone: "5550000002",
+        phoneVerifiedAt: new Date(),
         business: {
           create: {
             companyName: "Katman 3D Atölye",

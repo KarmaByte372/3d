@@ -6,6 +6,17 @@ import { prisma } from "./db";
  * Admin panelinden değiştirilebilir.
  */
 export const DEFAULT_SETTINGS = {
+  /** Sitenin/markanın görünen adı (logo, başlıklar, SMS metinleri) */
+  siteName: "Baskı3D",
+  /** Yasal metinlerde geçen şirket bilgileri */
+  companyTitle: "Digituva Yazılım",
+  companyAddress: "",
+  companyTaxOffice: "",
+  companyTaxNumber: "",
+  companyMersis: "",
+  companyEmail: "",
+  companyPhone: "",
+  companyKep: "",
   commissionBps: 2000,
   /** Çarşamba ödemesine dahil olmak için gereken asgari bakiye (kuruş) */
   minPayout: 10000,

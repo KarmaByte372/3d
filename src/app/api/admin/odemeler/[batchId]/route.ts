@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
 
 /** Bekleyen ödemeleri bankanın toplu EFT yüklemesi için CSV olarak verir. */
 export async function GET(_: Request, { params }: { params: Promise<{ batchId: string }> }) {
@@ -12,6 +13,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ batchId: s
     include: { payouts: { where: { status: "PENDING" }, include: { business: { include: { business: true } } } } },
   });
   if (!batch) return new NextResponse("Bulunamadı", { status: 404 });
+  const { siteName } = await getSettings();
 
   // Hücreler formül olarak yorumlanmasın diye =,+,-,@ ile başlayanlara ' eklenir
   const cell = (v: string) => {
@@ -24,7 +26,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ batchId: s
       p.iban,
       p.ibanHolder,
       (p.amount / 100).toFixed(2).replace(".", ","),
-      `Baski3D hakedis ${batch.payoutDate}`,
+      `${siteName} hakedis ${batch.payoutDate}`,
       p.id,
     ]),
   ];

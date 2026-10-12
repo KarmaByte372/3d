@@ -8,6 +8,9 @@ import { endSession, hashPassword, startSession, verifyPassword } from "@/lib/au
 import { HOME_BY_ROLE } from "@/lib/session";
 import type { ActionState } from "@/lib/errors";
 import { hit, isLimited, minutesLeft, reset } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/ip";
+import { normalizeTrMobile } from "@/lib/phone";
+import { issueCode } from "@/lib/otp";
 import { validateNewPassword } from "@/lib/account";
 import { AppError } from "@/lib/errors";
 
@@ -28,7 +31,7 @@ export async function loginAction(_: ActionState, formData: FormData): Promise<A
 
   // Kaba kuvvet denemelerine karşı: hesap başına 15 dakikada 5, IP başına 30 hatalı deneme
   const h = await headers();
-  const ip = h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "yerel";
+  const ip = clientIp(h);
   const WINDOW = 15 * 60 * 1000;
   const keys = [`email:${email}`, `ip:${ip}`];
   if (isLimited(keys[0], 5, WINDOW) || isLimited(keys[1], 30, WINDOW)) {
@@ -53,7 +56,7 @@ const registerSchema = z
     role: z.enum(["CUSTOMER", "BUSINESS"]),
     name: z.string().trim().min(2, "Ad soyad en az 2 karakter olmalı.").max(100),
     email: z.string().trim().toLowerCase().email("Geçerli bir e-posta girin."),
-    phone: z.string().trim().max(20).optional(),
+    phone: z.string().trim().min(10, "Cep telefonu numarası gerekli.").max(20),
     password: z.string().min(8, "Şifre en az 8 karakter olmalı.").max(200),
     companyName: z.string().trim().max(150).optional(),
     city: z.string().trim().max(50).optional(),
@@ -77,12 +80,17 @@ export async function registerAction(_: ActionState, formData: FormData): Promis
   if (await prisma.user.findUnique({ where: { email: d.email } })) {
     return { error: "Bu e-posta ile kayıtlı bir hesap var." };
   }
+  const phone = normalizeTrMobile(d.phone);
+  if (!phone) return { error: "Geçerli bir cep telefonu numarası girin (05XX XXX XX XX)." };
+  if (await prisma.user.findFirst({ where: { phone, phoneVerifiedAt: { not: null } } })) {
+    return { error: "Bu telefon numarası başka bir hesapta kayıtlı." };
+  }
 
   const user = await prisma.user.create({
     data: {
       email: d.email,
       name: d.name,
-      phone: d.phone || null,
+      phone,
       role: d.role,
       passwordHash: await hashPassword(d.password),
       business:
@@ -90,5 +98,11 @@ export async function registerAction(_: ActionState, formData: FormData): Promis
     },
   });
   await startSession(user);
-  redirect(d.role === "BUSINESS" ? "/isletme/profil?hosgeldin=1" : "/musteri");
+  try {
+    await issueCode({ phone, purpose: "VERIFY", userId: user.id, ip: clientIp(await headers()) });
+  } catch (e) {
+    // Gönderilemezse doğrulama sayfasından tekrar istenebilir
+    console.error("Kayıt SMS'i gönderilemedi", e);
+  }
+  redirect("/dogrula");
 }

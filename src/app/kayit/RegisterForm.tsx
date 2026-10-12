@@ -53,8 +53,9 @@ export function RegisterForm({ initialRole }: { initialRole: "CUSTOMER" | "BUSIN
         <input className="input" id="email" name="email" type="email" required autoComplete="email" />
       </div>
       <div>
-        <label className="label" htmlFor="phone">Telefon (opsiyonel)</label>
-        <input className="input" id="phone" name="phone" type="tel" />
+        <label className="label" htmlFor="phone">Cep telefonu</label>
+        <input className="input" id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="05XX XXX XX XX" required />
+        <p className="mt-1 text-xs text-ink-400">Numarana SMS ile doğrulama kodu gönderilecek. Şifreni unutursan da bu numarayı kullanacaksın.</p>
       </div>
       <div>
         <label className="label" htmlFor="password">Şifre</label>
@@ -62,7 +63,7 @@ export function RegisterForm({ initialRole }: { initialRole: "CUSTOMER" | "BUSIN
       </div>
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="terms" className="mt-1 accent-brand-500" required />
-        <span className="text-ink-500"><a href="/kosullar" target="_blank" className="link">Kullanım koşullarını</a> ve <a href="/kvkk" target="_blank" className="link">KVKK aydınlatma metnini</a> okudum, kabul ediyorum.</span>
+        <span className="text-ink-500"><a href="/kullanim-sartlari" target="_blank" className="link">Kullanım Şartları</a>&apos;nı ve <a href="/gizlilik" target="_blank" className="link">Gizlilik Politikası</a>&apos;nı okudum, kabul ediyorum. <a href="/kvkk" target="_blank" className="link">KVKK Aydınlatma Metni</a>&apos;ni okudum.</span>
       </label>
       <SubmitButton className="btn w-full py-3">Hesap oluştur</SubmitButton>
     </ActionForm>

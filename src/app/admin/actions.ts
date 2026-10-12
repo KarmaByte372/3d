@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { hashPassword, requireUser } from "@/lib/auth";
 import { adminResetPassword } from "@/lib/account";
-import { markWithdrawalPaid, rejectWithdrawal } from "@/lib/withdrawals";
 import { AppError, toActionError, type ActionState } from "@/lib/errors";
 import { cancelOrder, completeOrder } from "@/lib/marketplace";
 import { parseTL } from "@/lib/money";
@@ -142,6 +141,26 @@ export async function markFailedAction(_: ActionState, f: FormData): Promise<Act
   }
 }
 
+const COMPANY_KEYS = [
+  "companyTitle",
+  "companyAddress",
+  "companyTaxOffice",
+  "companyTaxNumber",
+  "companyMersis",
+  "companyEmail",
+  "companyPhone",
+  "companyKep",
+] as const;
+
+function companyFields(f: FormData) {
+  const siteName = String(f.get("siteName") ?? "").trim();
+  if (siteName.length < 2 || siteName.length > 40) throw new AppError("Site adı 2-40 karakter olmalı.");
+  const out: Record<string, string> = { siteName };
+  for (const k of COMPANY_KEYS) out[k] = String(f.get(k) ?? "").trim().slice(0, 300);
+  if (!out.companyTitle) throw new AppError("Şirket unvanı boş olamaz.");
+  return out;
+}
+
 export async function updateSettingsAction(_: ActionState, f: FormData): Promise<ActionState> {
   try {
     await admin();
@@ -171,6 +190,7 @@ export async function updateSettingsAction(_: ActionState, f: FormData): Promise
       bankName: String(f.get("bankName") ?? "").slice(0, 100),
       bankIban: String(f.get("bankIban") ?? "").slice(0, 40),
       bankAccountHolder: String(f.get("bankAccountHolder") ?? "").slice(0, 150),
+      ...companyFields(f),
     });
     revalidatePath("/", "layout");
     return { ok: "Ayarlar kaydedildi. Yeni komisyon oranı bundan sonra kabul edilen siparişlere uygulanır." };
@@ -202,26 +222,6 @@ export async function createAdminAction(_: ActionState, f: FormData): Promise<Ac
     const temp = crypto.randomBytes(9).toString("base64url");
     await prisma.user.create({ data: { email, name, role: "ADMIN", passwordHash: await hashPassword(temp) } });
     return done("/admin/kullanicilar", `Yönetici oluşturuldu. Geçici şifre: ${temp} (ilk girişte Hesabım'dan değiştirilmeli)`);
-  } catch (e) {
-    return toActionError(e);
-  }
-}
-
-export async function withdrawalPaidAction(_: ActionState, f: FormData): Promise<ActionState> {
-  try {
-    await admin();
-    await markWithdrawalPaid(String(f.get("id")), String(f.get("bankReference") ?? "").trim().slice(0, 100));
-    return done("/admin/cekimler", "Ödendi olarak işaretlendi.");
-  } catch (e) {
-    return toActionError(e);
-  }
-}
-
-export async function withdrawalRejectAction(_: ActionState, f: FormData): Promise<ActionState> {
-  try {
-    await admin();
-    await rejectWithdrawal(String(f.get("id")), String(f.get("note") ?? "").trim().slice(0, 300));
-    return done("/admin/cekimler", "Reddedildi, tutar kullanıcının bakiyesine iade edildi.");
   } catch (e) {
     return toActionError(e);
   }

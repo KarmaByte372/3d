@@ -13,13 +13,12 @@ export async function updateAccountAction(_: ActionState, formData: FormData): P
     const parsed = z
       .object({
         name: z.string().trim().min(2, "Ad soyad en az 2 karakter olmalı.").max(100),
-        phone: z.string().trim().max(20).optional(),
       })
       .safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { error: parsed.error.issues[0].message };
     await prisma.user.update({
       where: { id: user.id },
-      data: { name: parsed.data.name, phone: parsed.data.phone || null },
+      data: { name: parsed.data.name },
     });
     revalidatePath("/", "layout");
     return { ok: "Bilgileriniz kaydedildi." };
