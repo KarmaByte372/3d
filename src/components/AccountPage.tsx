@@ -1,12 +1,27 @@
 import { changePasswordAction, updateAccountAction } from "@/app/hesap-actions";
 import { changePhoneAction } from "@/app/dogrula/actions";
 import { formatPhone } from "@/lib/phone";
+import { maskedTcknOf } from "@/lib/identity";
+import { Badge } from "./Badge";
 import { ActionForm, SubmitButton } from "./ActionForm";
 import { IconShield, IconUser } from "./Icons";
 import { PageTitle } from "./Shell";
 import { formatDateTime } from "@/lib/dates";
 
-type U = { name: string; email: string; phone: string | null; phoneVerifiedAt: Date | null; pendingPhone: string | null; createdAt: Date };
+type U = {
+  name: string;
+  email: string;
+  role: string;
+  phone: string | null;
+  phoneVerifiedAt: Date | null;
+  pendingPhone: string | null;
+  createdAt: Date;
+  identityStatus: string;
+  legalFirstName: string | null;
+  legalLastName: string | null;
+  birthYear: number | null;
+  tcknEnc: string | null;
+};
 
 export function AccountPage({ user }: { user: U }) {
   return (
@@ -27,6 +42,23 @@ export function AccountPage({ user }: { user: U }) {
             <SubmitButton>Kaydet</SubmitButton>
           </ActionForm>
         </div>
+        {user.role !== "ADMIN" && (
+          <div className="card p-6 lg:col-span-2">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold">Kimlik</h2>
+              <Badge status={`ID_${user.identityStatus}`} />
+            </div>
+            <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[140px_1fr]">
+              <dt className="text-ink-400">Ad soyad</dt><dd>{user.legalFirstName} {user.legalLastName}</dd>
+              <dt className="text-ink-400">T.C. kimlik no</dt><dd className="font-mono">{maskedTcknOf(user) ?? "—"}</dd>
+              <dt className="text-ink-400">Doğum yılı</dt><dd>{user.birthYear ?? "—"}</dd>
+            </dl>
+            {user.identityStatus === "PENDING" && (
+              <p className="mt-3 text-sm text-amber-800">Bilgilerin yönetici onayı bekliyor. Onaylanınca bildirim alacaksın.</p>
+            )}
+            <p className="mt-3 text-xs text-ink-400">Kimlik bilgileri onaylandıktan sonra değiştirilemez; düzeltme için destek ile iletişime geç.</p>
+          </div>
+        )}
         <div className="card p-6 lg:col-span-2">
           <h2 className="mb-1 text-lg font-semibold">Cep telefonu</h2>
           <p className="mb-4 text-sm text-ink-500">

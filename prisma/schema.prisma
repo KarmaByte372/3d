@@ -31,6 +31,21 @@ model User {
   sessionVersion  Int       @default(0)
   createdAt       DateTime  @default(now())
 
+  /// --- TC kimlik doğrulama ---
+  /// NONE | PENDING (admin onayı bekliyor) | VERIFIED | REJECTED
+  identityStatus     String    @default("NONE")
+  /// TCKN AES-256-GCM ile şifreli
+  tcknEnc            String?
+  /// TCKN'nin HMAC özeti: aynı numaranın ikinci hesapta kullanılmasını engellemek için
+  tcknHash           String?
+  legalFirstName     String?
+  legalLastName      String?
+  birthYear          Int?
+  /// FORMAT (algoritma) | ADMIN (yönetici onayı) | KPS (NVİ sorgusu)
+  identityMethod     String?
+  identityVerifiedAt DateTime?
+  identityNote       String?
+
   business       BusinessProfile?
   requests       PrintRequest[]   @relation("CustomerRequests")
   quotes         Quote[]          @relation("BusinessQuotes")
@@ -44,6 +59,8 @@ model User {
   reviewsGiven   Review[]         @relation("CustomerReviews")
   reviewsGot     Review[]         @relation("BusinessReviews")
   withdrawals    Withdrawal[]
+
+  @@index([tcknHash])
 }
 
 model BusinessProfile {

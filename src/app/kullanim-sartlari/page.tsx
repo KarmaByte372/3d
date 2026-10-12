@@ -31,6 +31,7 @@ export default function TermsPage() {
           <ul>
             <li>Üyelik için gerçek ve güncel bilgiler ile size ait bir cep telefonu numarası gereklidir. Numara SMS ile gönderilen kodla doğrulanmadan Platform kullanılamaz.</li>
             <li>Bir telefon numarası yalnızca bir hesapta doğrulanabilir. Şifre sıfırlama işlemleri bu numaraya gönderilen SMS koduyla yapılır.</li>
+            <li>Platformu yalnızca 18 yaşından büyük kişiler kullanabilir. Üyeler T.C. kimlik numarası, ad, soyad ve doğum yılını kimliklerindeki gibi beyan eder. Atölye hesapları, kimlik bilgileri Şirket tarafından onaylanana kadar teklif veremez. Yanlış beyan hesabın kapatılma sebebidir.</li>
             <li>Hesap güvenliğiniz için, oturum açtığınız internet bağlantısı (IP adresi) değiştiğinde oturumunuz otomatik olarak kapatılır ve yeniden giriş yapmanız gerekir.</li>
             <li>Şifrenizin ve SMS kodlarının gizliliğinden siz sorumlusunuz. Kodları kimseyle paylaşmayın. Şirket çalışanları sizden kod istemez.</li>
           </ul>

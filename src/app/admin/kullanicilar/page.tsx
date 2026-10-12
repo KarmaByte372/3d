@@ -6,13 +6,15 @@ import { formatDateTime } from "@/lib/dates";
 import { formatIban } from "@/lib/iban";
 import { formatPhone } from "@/lib/phone";
 import { formatTL } from "@/lib/money";
-import { adjustBalanceAction, createAdminAction, resetUserPasswordAction, setUserStatusAction, toggleVerifiedAction } from "../actions";
+import { adjustBalanceAction, approveIdentityAction, createAdminAction, rejectIdentityAction, resetUserPasswordAction, setUserStatusAction, toggleVerifiedAction } from "../actions";
+import { maskedTcknOf } from "@/lib/identity";
 
-export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; rol?: string }> }) {
-  const { q, rol } = await searchParams;
+export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; rol?: string; kimlik?: string }> }) {
+  const { q, rol, kimlik } = await searchParams;
   const users = await prisma.user.findMany({
     where: {
       ...(rol ? { role: rol } : {}),
+      ...(kimlik ? { identityStatus: kimlik } : {}),
       ...(q ? { OR: [{ email: { contains: q } }, { name: { contains: q } }, { phone: { contains: q.replace(/\D/g, "").replace(/^0/, "") || q } }, { business: { companyName: { contains: q } } }] } : {}),
     },
     orderBy: { createdAt: "desc" },
@@ -30,6 +32,13 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
           <option value="CUSTOMER">Müşteri</option>
           <option value="BUSINESS">İşletme</option>
           <option value="ADMIN">Admin</option>
+        </select>
+        <select className="input max-w-[12rem]" name="kimlik" defaultValue={kimlik ?? ""}>
+          <option value="">Kimlik: tümü</option>
+          <option value="PENDING">Onay bekleyen</option>
+          <option value="VERIFIED">Doğrulanmış</option>
+          <option value="REJECTED">Reddedilmiş</option>
+          <option value="NONE">Girilmemiş</option>
         </select>
         <button className="btn-secondary">Ara</button>
       </form>
@@ -56,6 +65,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
               <Badge status={u.role} />
               <Badge status={u.status} />
               {u.business?.verified && <span className="text-xs text-green-700">✓ Doğrulanmış</span>}
+              {u.role !== "ADMIN" && u.identityStatus !== "VERIFIED" && <Badge status={`ID_${u.identityStatus}`} />}
               <span className="ml-auto font-medium">{formatTL(u.balance)}</span>
             </summary>
             <div className="mt-4 grid gap-4 border-t border-ink-100 pt-4 text-sm md:grid-cols-3">
@@ -63,6 +73,15 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                 <p>Ad: {u.name}</p>
                 <p>Telefon: {formatPhone(u.phone)} {u.phoneVerifiedAt ? <span className="text-emerald-700">✓ doğrulandı</span> : <span className="text-amber-700">doğrulanmadı</span>}</p>
                 <p>Kayıt: {formatDateTime(u.createdAt)}</p>
+                {u.role !== "ADMIN" && (
+                  <div className="mt-2 rounded-lg bg-ink-50 p-2">
+                    <p className="font-medium">Kimlik: <Badge status={`ID_${u.identityStatus}`} /></p>
+                    {u.legalFirstName && <p>{u.legalFirstName} {u.legalLastName} · {u.birthYear}</p>}
+                    {u.tcknEnc && <p className="font-mono">TCKN: {maskedTcknOf(u)}</p>}
+                    {u.identityMethod && <p className="text-xs text-ink-400">Yöntem: {u.identityMethod === "FORMAT" ? "algoritma kontrolü" : u.identityMethod === "ADMIN" ? "yönetici onayı" : "NVİ KPS"}</p>}
+                    {u.identityNote && <p className="text-xs text-red-700">Not: {u.identityNote}</p>}
+                  </div>
+                )}
                 {u.business && (
                   <>
                     <p>Şehir: {u.business.city} · VKN: {u.business.taxNumber ?? "—"}</p>
@@ -85,6 +104,19 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                   <ActionForm action={resetUserPasswordAction} confirm="Kullanıcıya geçici şifre atanacak ve tüm oturumları kapanacak. Devam edilsin mi?">
                     <input type="hidden" name="userId" value={u.id} />
                     <SubmitButton className="btn-secondary">Geçici şifre ver</SubmitButton>
+                  </ActionForm>
+                )}
+                {u.identityStatus === "PENDING" && (
+                  <ActionForm action={approveIdentityAction}>
+                    <input type="hidden" name="userId" value={u.id} />
+                    <SubmitButton>Kimliği onayla</SubmitButton>
+                  </ActionForm>
+                )}
+                {(u.identityStatus === "PENDING" || u.identityStatus === "VERIFIED") && u.role !== "ADMIN" && (
+                  <ActionForm action={rejectIdentityAction} confirm="Kullanıcıdan kimlik bilgilerini yeniden girmesi istenecek." className="flex gap-2">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <input className="input min-w-0 flex-1" name="note" placeholder="Red nedeni" />
+                    <SubmitButton className="btn-danger">Reddet</SubmitButton>
                   </ActionForm>
                 )}
                 {u.business && (

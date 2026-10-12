@@ -90,6 +90,17 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
   Panelde girilmemiş alanlar için `.env` değerleri kullanılır.
 - Gönderim "Kapalı (log)" iken SMS gitmez, kod sunucu loguna yazılır (yalnızca geliştirme ve test için).
 
+## TC kimlik doğrulama
+
+- Telefon doğrulamasından sonra müşteri ve atölyeler `/kimlik` adımında T.C. kimlik numarası, ad, soyad ve doğum yılı
+  girer; tamamlanmadan panele girilemez. 18 yaş altı kabul edilmez.
+- Numara algoritmayla kontrol edilir. **Müşteri** hemen doğrulanır; **atölye** yönetici onayına düşer ve onaylanana
+  kadar teklif veremez (admin → Kullanıcılar → "Onay bekleyen"). Reddedilen kullanıcı bilgilerini yeniden girer.
+- TCKN AES-256-GCM ile şifreli saklanır, her yerde maskeli gösterilir (`123******50`). Aynı numara aynı rolde ikinci
+  hesapta kullanılamaz (HMAC özetiyle kontrol; numara açık saklanmaz).
+- Algoritma kontrolü numaranın kişiye ait olduğunu kanıtlamaz. NVİ'nin ücretsiz KPSPublic servisi 2025'te kapatıldı;
+  gerçek eşleştirme için NVİ KPS kurumsal üyeliği gerekir. Üyelik alınırsa `identityMethod="KPS"` ile entegre edilecek.
+
 ## E-posta (SMTP)
 
 Admin → Entegrasyonlar'da SMTP sunucusu, port, SSL, kullanıcı, şifre ve gönderen adresi girilir ve test e-postası

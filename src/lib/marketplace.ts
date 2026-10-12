@@ -18,6 +18,10 @@ export async function submitQuote(input: {
   if (input.deliveryDays < 1 || input.deliveryDays > 90) throw new AppError("Teslim süresi 1-90 gün arası olmalı.");
 
   const settings = await getSettings();
+  const business = await prisma.user.findUnique({ where: { id: input.businessId }, select: { identityStatus: true } });
+  if (business?.identityStatus !== "VERIFIED") {
+    throw new AppError("Kimlik bilgilerin yönetici tarafından onaylandıktan sonra teklif verebilirsin.");
+  }
   return prisma.$transaction(async (tx) => {
     const request = await tx.printRequest.findUnique({
       where: { id: input.requestId },

@@ -17,7 +17,8 @@ export default function PrivacyPage() {
           <h2>Topladığımız bilgiler</h2>
           <ul>
             <li><strong>Hesap:</strong> ad soyad, e-posta, cep telefonu numarası, şifrenizin geri döndürülemez özeti (şifrenizin kendisini saklamayız).</li>
-            <li><strong>Atölyeler:</strong> işletme adı, vergi/TC kimlik numarası, şehir, IBAN ve hesap sahibi.</li>
+            <li><strong>Kimlik:</strong> T.C. kimlik numarası, kimlikteki ad soyad ve doğum yılı. T.C. kimlik numarası şifrelenerek saklanır, ekranlarda yalnızca maskeli (ör. 123******50) gösterilir.</li>
+            <li><strong>Atölyeler:</strong> işletme adı, vergi numarası, şehir, IBAN ve hesap sahibi.</li>
             <li><strong>İşlemler:</strong> talepler, yüklediğiniz model dosyaları, teklifler, siparişler, mesajlar, değerlendirmeler, bakiye hareketleri.</li>
             <li><strong>Güvenlik:</strong> giriş yaptığınız IP adresi, SMS doğrulama kayıtları (kodların kendisi değil, şifrelenmiş özetleri), hatalı giriş denemeleri.</li>
           </ul>
@@ -25,6 +26,7 @@ export default function PrivacyPage() {
           <h2>Bilgileri nasıl kullanıyoruz</h2>
           <ul>
             <li>Hesabınızı oluşturmak, telefonunuzu doğrulamak ve şifre sıfırlama kodu göndermek</li>
+            <li>Kimliğinizi ve 18 yaşından büyük olduğunuzu doğrulamak; sahte ve mükerrer hesapları önlemek</li>
             <li>Talep, teklif ve siparişlerin taraflar arasında iletilmesi; ödemelerin ve atölye hakedişlerinin yapılması</li>
             <li>Hesabınızı korumak: IP adresiniz değiştiğinde oturumun kapatılması, kaba kuvvet denemelerinin engellenmesi</li>
             <li>Anlaşmazlıkların incelenmesi ve yasal yükümlülüklerin yerine getirilmesi</li>

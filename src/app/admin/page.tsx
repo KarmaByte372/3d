@@ -23,7 +23,10 @@ export default async function AdminHome() {
       prisma.payout.aggregate({ where: { status: "PENDING" }, _sum: { amount: true }, _count: true }),
       prisma.order.aggregate({ where: { status: "COMPLETED" }, _sum: { amount: true } }),
     ]);
-  const disputes = await prisma.order.count({ where: { disputed: true, status: { in: ["IN_PROGRESS", "SHIPPED"] } } });
+  const [disputes, pendingIds] = await Promise.all([
+    prisma.order.count({ where: { disputed: true, status: { in: ["IN_PROGRESS", "SHIPPED"] } } }),
+    prisma.user.count({ where: { identityStatus: "PENDING" } }),
+  ]);
 
   return (
     <>
@@ -34,9 +37,10 @@ export default async function AdminHome() {
           <Link href="/admin/odemeler" className="link">Ödemelere git →</Link>
         </div>
       )}
-      {(disputes > 0 || pendingTopUps > 0) && (
+      {(disputes > 0 || pendingTopUps > 0 || pendingIds > 0) && (
         <div className="mb-5 flex flex-wrap gap-2">
           {disputes > 0 && <Link href="/admin/siparisler?durum=DISPUTED" className="chip border-amber-300 bg-amber-50 text-amber-800">⚠ {disputes} anlaşmazlık bekliyor</Link>}
+          {pendingIds > 0 && <Link href="/admin/kullanicilar?kimlik=PENDING" className="chip border-amber-300 bg-amber-50 text-amber-800">{pendingIds} kimlik onayı bekliyor</Link>}
           {pendingTopUps > 0 && <Link href="/admin/yuklemeler" className="chip">{pendingTopUps} havale onayı</Link>}
         </div>
       )}

@@ -62,5 +62,7 @@ export async function requireUser(role: "CUSTOMER" | "BUSINESS" | "ADMIN") {
   if (user.role !== role) redirect(HOME_BY_ROLE[user.role] ?? "/");
   // Telefonu SMS ile doğrulanmamış kullanıcı panele giremez (adminler hariç)
   if (user.role !== "ADMIN" && !user.phoneVerifiedAt) redirect("/dogrula");
+  // TC kimlik bilgisi verilmemiş ya da reddedilmişse kimlik adımına
+  if (user.role !== "ADMIN" && (user.identityStatus === "NONE" || user.identityStatus === "REJECTED")) redirect("/kimlik");
   return user;
 }

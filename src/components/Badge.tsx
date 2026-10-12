@@ -28,6 +28,10 @@ const LABELS: Record<string, [string, keyof typeof TONES, boolean?]> = {
   CUSTOMER: ["Müşteri", "blue"],
   BUSINESS: ["İşletme", "orange"],
   ADMIN: ["Admin", "dark"],
+  ID_NONE: ["Kimlik girilmedi", "gray"],
+  ID_PENDING: ["Kimlik onay bekliyor", "amber", true],
+  ID_VERIFIED: ["Kimlik doğrulandı", "green"],
+  ID_REJECTED: ["Kimlik reddedildi", "red"],
 };
 
 export function Badge({ status }: { status: string }) {

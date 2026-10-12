@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { hashPassword, requireUser } from "@/lib/auth";
 import { adminResetPassword } from "@/lib/account";
+import { approveIdentity, rejectIdentity } from "@/lib/identity";
 import { AppError, toActionError, type ActionState } from "@/lib/errors";
 import { cancelOrder, completeOrder } from "@/lib/marketplace";
 import { parseTL } from "@/lib/money";
@@ -302,6 +303,26 @@ export async function testMailAction(_: ActionState, f: FormData): Promise<Actio
     return { ok: `Test e-postası ${to} adresine gönderildi.` };
   } catch (e) {
     if (e instanceof MailError) return { error: `E-posta gönderilemedi: ${e.message}` };
+    return toActionError(e);
+  }
+}
+
+export async function approveIdentityAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    await approveIdentity(String(f.get("userId")));
+    return done("/admin/kullanicilar", "Kimlik onaylandı.");
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function rejectIdentityAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    await rejectIdentity(String(f.get("userId")), String(f.get("note") ?? "").slice(0, 300));
+    return done("/admin/kullanicilar", "Kimlik reddedildi; kullanıcıdan bilgilerini yeniden girmesi istenecek.");
+  } catch (e) {
     return toActionError(e);
   }
 }

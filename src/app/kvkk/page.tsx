@@ -15,7 +15,7 @@ export default function KvkkPage() {
 
           <h2>1. İşlenen kişisel veriler</h2>
           <ul>
-            <li><strong>Kimlik:</strong> ad soyad; atölyeler için vergi/TC kimlik numarası</li>
+            <li><strong>Kimlik:</strong> ad soyad, T.C. kimlik numarası, doğum yılı; atölyeler için ayrıca vergi numarası</li>
             <li><strong>İletişim:</strong> e-posta adresi, cep telefonu numarası</li>
             <li><strong>Finans:</strong> bakiye hareketleri; atölyeler için IBAN ve hesap sahibi</li>
             <li><strong>Müşteri işlem:</strong> talepler, model dosyaları, teklifler, siparişler, mesajlar, değerlendirmeler</li>
@@ -26,6 +26,7 @@ export default function KvkkPage() {
           <ul>
             <li>Üyelik sözleşmesinin kurulması ve ifası, siparişlerin yürütülmesi, ödemelerin yapılması (KVKK m.5/2-c)</li>
             <li>Telefon numarasının doğrulanması ve SMS ile şifre sıfırlama, hesap güvenliğinin sağlanması (m.5/2-c ve m.5/2-f)</li>
+            <li>Üyelerin kimliğinin ve 18 yaşından büyük olduğunun doğrulanması, aynı kişinin birden fazla hesap açmasının engellenmesi (m.5/2-f, meşru menfaat; kimlik adımında alınan açık rıza)</li>
             <li>Vergi ve ticaret mevzuatından doğan saklama ve bildirim yükümlülükleri (m.5/2-ç)</li>
             <li>Anlaşmazlıkların çözümü ve hakların tesisi, kullanılması, korunması (m.5/2-e)</li>
             <li>Dolandırıcılığın ve kötüye kullanımın önlenmesi (m.5/2-f, meşru menfaat)</li>

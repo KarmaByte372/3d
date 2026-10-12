@@ -34,6 +34,11 @@ export default async function BusinessHome() {
           <Link href="/isletme/talepler" className="btn">Taleplere göz at <IconArrowRight className="h-4 w-4" /></Link>
         </div>
       </section>
+      {user.identityStatus === "PENDING" && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <strong>Kimliğin onay bekliyor.</strong> Yönetici onaylayana kadar talepleri görebilir ama teklif veremezsin. Onaylanınca bildirim alacaksın.
+        </div>
+      )}
       {!hasIban && (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           Çarşamba ödemelerini alabilmek için <Link href="/isletme/profil" className="link">IBAN bilgini ekle</Link>.
