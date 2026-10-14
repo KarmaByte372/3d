@@ -66,7 +66,10 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
               <Badge status={u.status} />
               {u.business?.verified && <span className="text-xs text-green-700">✓ Doğrulanmış</span>}
               {u.role !== "ADMIN" && u.identityStatus !== "VERIFIED" && <Badge status={`ID_${u.identityStatus}`} />}
-              <span className="ml-auto font-medium">{formatTL(u.balance)}</span>
+              <span className="ml-auto text-right font-medium">
+                {formatTL(u.balance)}
+                {u.role === "BUSINESS" && <span className="block text-[11px] font-normal text-ink-400">kazanç · bakiye {formatTL(u.credit)}</span>}
+              </span>
             </summary>
             <div className="mt-4 grid gap-4 border-t border-ink-100 pt-4 text-sm md:grid-cols-3">
               <div className="space-y-1">
@@ -130,6 +133,12 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                 <ActionForm action={adjustBalanceAction} confirm="Bakiye düzeltmesi yapılsın mı?" className="space-y-2">
                   <input type="hidden" name="userId" value={u.id} />
                   <p className="font-medium">Bakiye düzeltme</p>
+                  {u.role === "BUSINESS" && (
+                    <select className="input" name="wallet" defaultValue="CREDIT">
+                      <option value="CREDIT">Bakiye (teklif ücretleri) · {formatTL(u.credit)}</option>
+                      <option value="BALANCE">Kazanç (çarşamba ödemesi) · {formatTL(u.balance)}</option>
+                    </select>
+                  )}
                   <input className="input" name="amount" placeholder="Tutar (örn. 100 veya -50)" required />
                   <input className="input" name="note" placeholder="Açıklama (zorunlu)" required />
                   <SubmitButton className="btn-secondary">Uygula</SubmitButton>

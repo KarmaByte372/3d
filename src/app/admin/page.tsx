@@ -17,12 +17,16 @@ export default async function AdminHome() {
       prisma.topUp.count({ where: { status: "PENDING", method: "BANK_TRANSFER" } }),
       prisma.order.count({ where: { status: { in: ["IN_PROGRESS", "SHIPPED"] } } }),
       prisma.order.aggregate({ where: { status: { in: ["IN_PROGRESS", "SHIPPED"] } }, _sum: { amount: true } }),
-      prisma.ledgerEntry.aggregate({ where: { type: "COMMISSION" }, _sum: { amount: true } }),
-      prisma.ledgerEntry.aggregate({ where: { type: "COMMISSION", createdAt: { gte: monthStart } }, _sum: { amount: true } }),
+      prisma.ledgerEntry.aggregate({ where: { userId: null, type: { in: ["COMMISSION", "QUOTE_FEE"] } }, _sum: { amount: true } }),
+      prisma.ledgerEntry.groupBy({ by: ["type"], where: { userId: null, type: { in: ["COMMISSION", "QUOTE_FEE"] }, createdAt: { gte: monthStart } }, _sum: { amount: true }, _count: true }),
       prisma.user.aggregate({ where: { role: "BUSINESS" }, _sum: { balance: true } }),
       prisma.payout.aggregate({ where: { status: "PENDING" }, _sum: { amount: true }, _count: true }),
       prisma.order.aggregate({ where: { status: "COMPLETED" }, _sum: { amount: true } }),
     ]);
+  const feeMonth = commissionMonth.find((r) => r.type === "QUOTE_FEE");
+  const comMonth = commissionMonth.find((r) => r.type === "COMMISSION");
+  const revenueMonth = (feeMonth?._sum.amount ?? 0) + (comMonth?._sum.amount ?? 0);
+  const credits = await prisma.user.aggregate({ where: { role: "BUSINESS" }, _sum: { credit: true } });
   const [disputes, pendingIds] = await Promise.all([
     prisma.order.count({ where: { disputed: true, status: { in: ["IN_PROGRESS", "SHIPPED"] } } }),
     prisma.user.count({ where: { identityStatus: "PENDING" } }),
@@ -45,14 +49,16 @@ export default async function AdminHome() {
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon="IconChart" accent="orange" label="Komisyon geliri (bu ay)" value={formatTL(commissionMonth._sum.amount ?? 0)} hint={`Oran: ${formatBps(settings.commissionBps)}`} />
-        <Stat icon="IconLayers" accent="pink" label="Toplam komisyon geliri" value={formatTL(commissionAll._sum.amount ?? 0)} />
+        <Stat icon="IconChart" accent="orange" label="Gelir (bu ay)" value={formatTL(revenueMonth)}
+          hint={`${feeMonth?._count ?? 0} teklif ücreti ${formatTL(feeMonth?._sum.amount ?? 0)} · komisyon ${formatBps(settings.commissionBps)} ${formatTL(comMonth?._sum.amount ?? 0)}`} />
+        <Stat icon="IconLayers" accent="pink" label="Toplam gelir" value={formatTL(commissionAll._sum.amount ?? 0)} hint="Teklif ücretleri + komisyon" />
         <Stat icon="IconBox" accent="cyan" label="Tamamlanan işlem hacmi" value={formatTL(gmv._sum.amount ?? 0)} />
         <Stat icon="IconShield" accent="lime" label="Emanetteki tutar" value={formatTL(escrow._sum.amount ?? 0)} hint={`${activeOrders} aktif sipariş`} />
-        <Stat icon="IconWallet" accent="orange" label="İşletmelere borç (bakiye)" value={formatTL(owed._sum.balance ?? 0)} hint={`Sonraki ödeme: ${formatDate(nextWednesday())}`} />
+        <Stat icon="IconWallet" accent="orange" label="İşletmelere borç (kazanç)" value={formatTL(owed._sum.balance ?? 0)} hint={`Sonraki ödeme: ${formatDate(nextWednesday())}`} />
         <Stat icon="IconCalendar" accent="pink" label="Bekleyen ödemeler" value={formatTL(pendingPayouts._sum.amount ?? 0)} hint={`${pendingPayouts._count} transfer`} />
         <Stat icon="IconBank" accent="cyan" label="Onay bekleyen havale" value={String(pendingTopUps)} />
-        <Stat icon="IconUsers" accent="lime" label="Kullanıcılar" value={`${customers} / ${businesses}`} hint="Müşteri / işletme" />
+        <Stat icon="IconQuote" accent="lime" label="Atölye bakiyeleri" value={formatTL(credits._sum.credit ?? 0)} hint="Yüklenmiş, teklif ücretinde kullanılacak" />
+        <Stat icon="IconUsers" accent="orange" label="Kullanıcılar" value={`${customers} / ${businesses}`} hint="Müşteri / işletme" />
       </div>
     </>
   );

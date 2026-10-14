@@ -24,7 +24,7 @@ export default async function AdminTopUps() {
             <div key={t.id} className="card flex flex-wrap items-center gap-4">
               <div className="min-w-[14rem] flex-1">
                 <p className="font-semibold">{formatTL(t.amount)} · <span className="font-mono">{t.reference}</span></p>
-                <p className="text-sm text-ink-500">{t.user.name} ({t.user.email}) · {formatDateTime(t.createdAt)}</p>
+                <p className="text-sm text-ink-500">{t.user.name} ({t.user.email}) · {t.target === "CREDIT" ? "Atölye bakiyesi" : "Müşteri bakiyesi"} · {formatDateTime(t.createdAt)}</p>
               </div>
               <ActionForm action={approveTopUpAction} confirm={`${formatTL(t.amount)} bakiyeye eklensin mi?`}>
                 <input type="hidden" name="topUpId" value={t.id} />
@@ -48,7 +48,7 @@ export default async function AdminTopUps() {
               <tr key={t.id}>
                 <td data-label="İşlem">{formatDateTime(t.processedAt)}</td>
                 <td data-label="Kullanıcı">{t.user.email}</td>
-                <td data-label="Yöntem">{t.method === "CARD" ? "Kart" : "Havale"}</td>
+                <td data-label="Yöntem">{t.method === "CARD" ? (t.provider === "paytr" ? "PayTR" : "Kart (test)") : "Havale"}{t.target === "CREDIT" ? " · atölye" : ""}</td>
                 <td data-label="Kod" className="font-mono">{t.reference}</td>
                 <td data-label="Tutar">{formatTL(t.amount)}</td>
                 <td data-label="Durum"><Badge status={t.status} /></td>

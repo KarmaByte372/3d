@@ -47,9 +47,10 @@ export default async function BusinessHome() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon="IconWallet" accent="orange" label="Ödenecek kazanç" value={formatTL(user.balance)}
           hint={`Sonraki ödeme: ${formatDate(nextWednesday())} (asgari ${formatTL(settings.minPayout)})`} />
-        <Stat icon="IconChart" accent="pink" label="Toplam net kazanç" value={formatTL(earned._sum.businessEarning ?? 0)} hint={`Komisyon ${formatBps(settings.commissionBps)}`} />
-        <Stat icon="IconNozzle" accent="cyan" label="Aktif sipariş" value={String(activeOrders)} />
-        <Stat icon="IconQuote" accent="lime" label="Bekleyen teklif" value={String(pendingQuotes)} />
+        <Stat icon="IconLayers" accent="pink" label="Bakiye" value={formatTL(user.credit)} hint="Teklif ücretleri için · yükle →" href="/isletme/bakiye" />
+        <Stat icon="IconChart" accent="cyan" label="Toplam net kazanç" value={formatTL(earned._sum.businessEarning ?? 0)}
+          hint={settings.commissionBps > 0 ? `Komisyon ${formatBps(settings.commissionBps)}` : "Komisyon yok"} />
+        <Stat icon="IconNozzle" accent="lime" label="Aktif sipariş · bekleyen teklif" value={`${activeOrders} · ${pendingQuotes}`} />
       </div>
     </>
   );

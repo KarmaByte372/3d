@@ -1,21 +1,71 @@
-import { prisma } from "./db";
+import { prisma, type Tx } from "./db";
 import { AppError } from "./errors";
 import { getSettings } from "./settings";
 import { splitCommission } from "./money";
-import { changeBalance, recordPlatformEntry } from "./wallet";
+import { changeBalance, changeWallet, recordPlatformEntry } from "./wallet";
+import { computeQuoteFee, type FeeRequest, type RatingStats } from "./quote-fee";
 import { notify, notifyAdmins } from "./notifications";
 import { formatTL } from "./money";
 
-/** İşletme bir talebe teklif verir. Teklif vermek ücretsizdir; komisyon yalnızca tamamlanan işten alınır. */
+export type FeeSource = "AUTO" | "EARNINGS" | "CREDIT";
+
+/** Atölyenin puan istatistikleri (teklif ücreti indirimi için) */
+export async function ratingStats(businessId: string, db: Tx | typeof prisma = prisma): Promise<RatingStats> {
+  const [agg, fiveStars] = await Promise.all([
+    db.review.aggregate({ where: { businessId }, _avg: { rating: true }, _count: { _all: true } }),
+    db.review.count({ where: { businessId, rating: 5 } }),
+  ]);
+  return { count: agg._count._all, average: agg._avg.rating ?? 0, fiveStars };
+}
+
+/** Bu atölyenin bu talebe teklif vermesi için ödeyeceği ücret (önizleme ve tahsilat aynı hesabı kullanır). */
+export async function quoteFeeFor(businessId: string, request: FeeRequest, db: Tx | typeof prisma = prisma) {
+  const [settings, rating] = await Promise.all([getSettings(), ratingStats(businessId, db)]);
+  return computeQuoteFee(request, rating, settings);
+}
+
+/**
+ * Teklif ücretini tahsil eder. AUTO: önce kazançtan (BALANCE), yetmeyen kısım bakiyeden (CREDIT).
+ * EARNINGS / CREDIT: yalnızca seçilen cüzdandan. Ücret iade edilmez.
+ */
+export async function chargeQuoteFee(tx: Tx, businessId: string, fee: number, source: FeeSource, title: string) {
+  if (fee <= 0) return;
+  const u = await tx.user.findUniqueOrThrow({ where: { id: businessId }, select: { balance: true, credit: true } });
+  let fromEarnings = 0;
+  let fromCredit = 0;
+  if (source === "EARNINGS") fromEarnings = fee;
+  else if (source === "CREDIT") fromCredit = fee;
+  else {
+    fromEarnings = Math.min(u.balance, fee);
+    fromCredit = fee - fromEarnings;
+  }
+  if (fromEarnings > u.balance || fromCredit > u.credit) {
+    const where = source === "EARNINGS" ? "Kazancın" : source === "CREDIT" ? "Bakiyen" : "Kazanç ve bakiyenin toplamı";
+    throw new AppError(`Teklif ücreti ${formatTL(fee)}. ${where} yetersiz; Bakiye sayfasından yükleme yapabilirsin.`);
+  }
+  const description = `Teklif ücreti: ${title}`;
+  if (fromEarnings > 0) await changeWallet(tx, businessId, "BALANCE", -fromEarnings, { type: "QUOTE_FEE", description });
+  if (fromCredit > 0) await changeWallet(tx, businessId, "CREDIT", -fromCredit, { type: "QUOTE_FEE", description });
+  await recordPlatformEntry(tx, fee, { type: "QUOTE_FEE", description });
+}
+
+/**
+ * İşletme bir talebe teklif verir. Yeni teklifte (veya geri çekilmiş teklifi yeniden açarken) teklif ücreti
+ * tahsil edilir; bekleyen teklifi güncellemek ücretsizdir. Tamamlanan işten komisyon ayarı ayrıca uygulanır (varsayılan %0).
+ */
 export async function submitQuote(input: {
   businessId: string;
   requestId: string;
   price: number;
   deliveryDays: number;
   message: string;
+  feeSource?: FeeSource;
+  /** Atölyenin ekranda gördüğü ücret; arada değiştiyse teklif gönderilmez */
+  expectedFee?: number;
 }) {
   if (input.price <= 0) throw new AppError("Teklif tutarı sıfırdan büyük olmalı.");
   if (input.deliveryDays < 1 || input.deliveryDays > 90) throw new AppError("Teslim süresi 1-90 gün arası olmalı.");
+  const { feeSource = "AUTO", expectedFee, ...data } = input;
 
   const settings = await getSettings();
   const business = await prisma.user.findUnique({ where: { id: input.businessId }, select: { identityStatus: true } });
@@ -43,12 +93,20 @@ export async function submitQuote(input: {
     if (request._count.quotes >= settings.maxQuotesPerRequest) {
       throw new AppError("Bu talep en fazla teklif sayısına ulaştı.");
     }
+
+    const fee = await quoteFeeFor(input.businessId, request, tx);
+    if (expectedFee !== undefined && expectedFee !== fee.amount) {
+      throw new AppError(`Teklif ücreti ${formatTL(fee.amount)} olarak güncellendi. Sayfayı yenileyip tekrar deneyin.`);
+    }
+    await chargeQuoteFee(tx, input.businessId, fee.amount, feeSource, request.title);
+    const feeData = { feeAmount: fee.amount, feeDetail: JSON.stringify(fee.lines) };
+
     const quote = existing
       ? await tx.quote.update({
           where: { id: existing.id },
-          data: { price: input.price, deliveryDays: input.deliveryDays, message: input.message, status: "PENDING" },
+          data: { price: input.price, deliveryDays: input.deliveryDays, message: input.message, status: "PENDING", ...feeData },
         })
-      : await tx.quote.create({ data: { ...input } });
+      : await tx.quote.create({ data: { ...data, ...feeData } });
     await notify(tx, request.customerId, {
       title: `Yeni teklif: ${formatTL(input.price)}`,
       body: request.title,

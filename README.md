@@ -5,27 +5,51 @@
 
 ## Nasıl çalışır?
 
-1. **Müşteri** bakiye yükler: kartla (ödeme sağlayıcısı) ya da havale/EFT ile (admin onayı).
+1. **Müşteri** bakiye yükler: kartla (PayTR iFrame) ya da havale/EFT ile (admin onayı).
 2. Müşteri **talep** oluşturur: açıklama, malzeme, adet, şehir, model dosyası (STL/OBJ/3MF/STEP/ZIP, en fazla 50 MB).
-3. **İşletmeler** açık talepleri görür ve **ücretsiz teklif** verir. Talep başına teklif sınırı vardır.
+3. **İşletmeler** açık talepleri görür ve **teklif ücreti** ödeyerek teklif verir (Armut modeli, iade yok).
+   Ücret konum, kategori, iş büyüklüğü ve atölyenin puanına göre hesaplanır; teklif sayfasında dökümü görünür.
+   Talep başına teklif sınırı vardır.
 4. Müşteri bir teklifi kabul eder. Tutar bakiyesinden düşülür ve **emanette** tutulur. Diğer teklifler reddedilir.
 5. İşletme siparişi kargolar. Müşteri teslimi onaylar. Onaylamazsa 7 gün sonra sipariş otomatik tamamlanır.
-6. Sipariş tamamlanınca **%20 komisyon** platforma, kalan tutar işletmenin bakiyesine geçer.
+6. Sipariş tamamlanınca tutarın tamamı işletmenin **kazancına** geçer (komisyon varsayılan %0, admin ayarı).
 7. **Her çarşamba 09:00'da** (İstanbul) ödeme partisi oluşur. Admin gün içinde transferleri yapar ve "Ödendi" işaretler.
    Başarısız transferler işletme bakiyesine geri döner.
 
 İptalde emanetteki tutarın tamamı müşteriye iade edilir. Müşteri sorun bildirirse otomatik onay durur ve kararı
 admin verir. Tamamlanan siparişler 1-5 yıldızla değerlendirilir. Puanlar teklif kartlarında ve atölyenin herkese
-açık profilinde (`/atolye/[id]`) görünür. Komisyon oranının nasıl belirlendiği için:
-[docs/komisyon.md](docs/komisyon.md).
+açık profilinde (`/atolye/[id]`) görünür.
+
+### Teklif ücreti ve atölyenin iki cüzdanı
+
+```
+ücret = kategori tabanı × şehir çarpanı × iş büyüklüğü (bütçe) çarpanı × (1 − puan indirimi)
+```
+
+- Varsayılanlar: FDM 25 TL, SLA/Reçine 40 TL, SLS/MJF 60 TL, metal 90 TL; İstanbul ×1,3, Ankara/İzmir ×1,2;
+  bütçe ≤500 TL ×0,8 … >10.000 TL ×1,8. Sonuç 10–300 TL arasına kırpılıp tam liraya yuvarlanır.
+- Puan indirimi en az 3 değerlendirmeden sonra başlar: ortalama ≥4,8 %25, ≥4,5 %15, ≥4 %5, <3 %20 zam;
+  her 5 yıldızlı değerlendirme +%1 (en fazla %15). Toplam indirim en fazla %40. Hepsi **admin → Ayarlar**'dan değişir.
+- Atölyenin **Kazanç** (tamamlanan işler, çarşamba IBAN'a ödenir) ve **Bakiye** (PayTR/havale ile yüklenir, yalnızca
+  teklif ücretinde kullanılır, IBAN'a ödenmez) olmak üzere iki cüzdanı vardır. Ücret varsayılan olarak önce kazançtan,
+  yetmezse bakiyeden düşülür; atölye teklif verirken "yalnızca kazanç" veya "yalnızca bakiye" seçebilir.
+- Bekleyen teklifi güncellemek ücretsizdir; geri çekilen teklif iade edilmez, yeniden açmak yeniden ücretlidir.
+- Ücret mantığı: `src/lib/quote-fee.ts`, tahsilat: `chargeQuoteFee` (`src/lib/marketplace.ts`).
+
+### PayTR
+
+Admin → Entegrasyonlar → PayTR: mağaza no, Merchant Key, Merchant Salt (şifreli saklanır), test modu, taksit.
+PayTR mağaza panelinde **Bildirim URL** olarak `https://ALANADI/api/paytr/callback` girilmelidir. Bakiye yalnızca
+imzası doğrulanan bildirimle yüklenir (`src/app/api/paytr/callback/route.ts`); kullanıcının döndüğü sayfa bakiye
+yüklemez. PayTR kapalıyken `PAYMENT_PROVIDER="mock"` geliştirme için test ödeme sayfasını açar.
 
 ## Roller ve paneller
 
 | Rol | Yol | Özellikler |
 |---|---|---|
 | Müşteri | `/musteri` | Talepler, teklif karşılaştırma/kabul (atölye puanlarıyla), sipariş detayı ve mesajlaşma, teslim onayı, sorun bildirme, değerlendirme, bakiye yükleme (iadeler bakiyede kalır), bildirimler, Hesabım (şifre ve telefon değiştirme) |
-| İşletme | `/isletme` | Açık talepler (şehir/malzeme filtresi), teklif ver/güncelle/geri çek, sipariş detayı ve mesajlaşma, kargolama/iptal, kazanç ve ödemeler, profil ve IBAN, herkese açık profil, bildirimler, Hesabım |
-| Admin | `/admin` | Entegrasyonlar (Netgsm SMS, SMTP, test gönderimi), özet ve uyarılar (anlaşmazlık, havale), kullanıcılar (askıya alma, doğrulama, telefon durumu, bakiye düzeltme, geçici şifre, yeni yönetici), havale onayı, sipariş inceleme (mesajlar, para hareketleri, tamamla / iptal ve iade), çarşamba ödemeleri, ayarlar (komisyon, marka adı, şirket bilgileri, banka) |
+| İşletme | `/isletme` | Açık talepler (şehir/malzeme filtresi), teklif ver/güncelle/geri çek, sipariş detayı ve mesajlaşma, kargolama/iptal, Bakiye (kartla/havaleyle yükleme, teklif ücretleri), kazanç ve ödemeler, profil ve IBAN, herkese açık profil, bildirimler, Hesabım |
+| Admin | `/admin` | Entegrasyonlar (PayTR, TC kimlik, Netgsm SMS, SMTP, test gönderimi), özet ve uyarılar (anlaşmazlık, havale), kullanıcılar (askıya alma, doğrulama, telefon durumu, bakiye düzeltme, geçici şifre, yeni yönetici), havale onayı, sipariş inceleme (mesajlar, para hareketleri, tamamla / iptal ve iade), çarşamba ödemeleri, ayarlar (teklif ücreti tabloları, komisyon, marka adı, şirket bilgileri, banka) |
 
 ## Kurulum
 
@@ -61,7 +85,8 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
 
 - Tüm tutarlar **kuruş** cinsinden tamsayıdır, oranlar baz puandır (%20 = 2000). Ondalık hata olmaz.
 - Her bakiye değişimi `LedgerEntry` defterine işlenir. Bakiye düşüşleri koşullu güncellemeyle yapılır,
-  bakiye eksiye düşmez. Komisyon geliri kullanıcısız (platform) defter kaydıdır.
+  bakiye eksiye düşmez. Teklif ücreti ve komisyon geliri kullanıcısız (platform) defter kaydıdır.
+  Defter kayıtlarında `wallet` alanı hangi cüzdanın (BALANCE / CREDIT) değiştiğini gösterir.
 - Komisyon oranı sipariş anında siparişe yazılır. Sonradan ayar değişse de eski siparişler etkilenmez.
 - Oturum: imzalı JWT, httpOnly çerez. Şifreler bcrypt ile saklanır. Askıya alınan hesap anında erişimini kaybeder.
   Şifre değişince ya da admin sıfırlayınca diğer cihazlardaki oturumlar kapanır (`sessionVersion`).

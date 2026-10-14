@@ -38,7 +38,7 @@ export default function TermsPage() {
 
           <h2>4. Bakiye, ödeme ve iadeler</h2>
           <ul>
-            <li>Müşteri, kartla veya havale/EFT ile bakiye yükler. En az yükleme tutarı {formatTL(s.minTopUp)}, en fazla {formatTL(s.maxTopUp)}&apos;dir.</li>
+            <li>Müşteri, kartla (ödeme kuruluşu PayTR aracılığıyla) veya havale/EFT ile bakiye yükler. Kart bilgileri Platform&apos;da saklanmaz. En az yükleme tutarı {formatTL(s.minTopUp)}, en fazla {formatTL(s.maxTopUp)}&apos;dir.</li>
             <li>Bir teklif kabul edildiğinde sipariş tutarı bakiyeden düşülür ve sipariş tamamlanana kadar emanette tutulur. Bu sürede atölyeye aktarılmaz.</li>
             <li>Müşteri teslimi onayladığında, ya da sipariş kargoya verildikten sonra {s.autoCompleteDays} gün içinde sorun bildirmezse, tutar atölyeye aktarılır.</li>
             <li>
@@ -50,7 +50,27 @@ export default function TermsPage() {
 
           <h2>5. Atölyeler için hizmet bedeli ve ödemeler</h2>
           <ul>
-            <li>Teklif vermek ücretsizdir. Tamamlanan her siparişin tutarından {formatBps(s.commissionBps)} Platform hizmet bedeli kesilir. Bu oran Şirket tarafından değiştirilebilir; değişiklik yalnızca sonraki siparişlere uygulanır.</li>
+            {s.quoteFeeEnabled === "true" ? (
+              <li>
+                <strong>Teklif ücreti.</strong> Atölye, bir talebe teklif gönderirken Platform hizmet bedeli olarak teklif ücreti öder. Ücret; talebin
+                kategorisine, konumuna, iş büyüklüğüne ve atölyenin aldığı değerlendirmelere göre hesaplanır ve teklif gönderilmeden önce atölyeye
+                gösterilir. Teklif ücreti, teklifin kabul edilip edilmemesinden, geri çekilmesinden veya talebin iptalinden bağımsız olarak
+                <strong> iade edilmez</strong>.
+              </li>
+            ) : (
+              <li>Teklif vermek ücretsizdir.</li>
+            )}
+            <li>
+              {s.commissionBps > 0
+                ? <>Tamamlanan her siparişin tutarından {formatBps(s.commissionBps)} Platform hizmet bedeli kesilir.</>
+                : <>Tamamlanan siparişlerden komisyon alınmaz; sipariş tutarının tamamı atölyeye aktarılır.</>}{" "}
+              Ücret ve oranlar Şirket tarafından değiştirilebilir; değişiklik yalnızca sonraki teklif ve siparişlere uygulanır.
+            </li>
+            <li>
+              Atölyenin iki ayrı hesabı vardır: <strong>Kazanç</strong> (tamamlanan siparişlerden gelen ve çarşamba günleri IBAN&apos;a ödenen tutar) ve
+              <strong> Bakiye</strong> (atölyenin kartla veya havaleyle yüklediği, yalnızca teklif ücretlerinde kullanılan tutar). Teklif ücreti atölyenin
+              seçimine göre önce kazançtan, yetmezse bakiyeden düşülür. Yüklenen bakiye nakde çevrilmez, IBAN&apos;a aktarılmaz ve iade edilmez.
+            </li>
             <li>Atölye kazançları her çarşamba günü, bakiyesi {formatTL(s.minPayout)} ve üzerinde olan atölyelerin kayıtlı IBAN&apos;ına gönderilir. IBAN bilgisinin doğruluğundan atölye sorumludur.</li>
             <li>Atölye, kazançlarına ilişkin vergisel yükümlülüklerden ve müşteriye fatura düzenlemekten kendisi sorumludur.</li>
           </ul>

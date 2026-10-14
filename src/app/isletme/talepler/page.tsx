@@ -5,7 +5,10 @@ import { MaterialDot } from "@/components/Spec";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/dates";
+import { ratingStats } from "@/lib/marketplace";
 import { formatTL } from "@/lib/money";
+import { computeQuoteFee } from "@/lib/quote-fee";
+import { getSettings } from "@/lib/settings";
 
 export default async function OpenRequests({
   searchParams,
@@ -26,9 +29,14 @@ export default async function OpenRequests({
     include: { quotes: { where: { businessId: user.id }, select: { status: true } } },
   });
 
+  const [settings, rating] = await Promise.all([getSettings(), ratingStats(user.id)]);
+  const feeOn = settings.quoteFeeEnabled === "true";
+
   return (
     <>
-      <PageTitle eyebrow="İş fırsatları" description="Teklif vermek ücretsiz. Komisyon sadece tamamlanan işten alınır.">
+      <PageTitle eyebrow="İş fırsatları" description={feeOn
+        ? "Teklif ücreti konuma, kategoriye ve iş büyüklüğüne göre değişir; puanın yükseldikçe düşer. İşi alırsan komisyon ödemezsin."
+        : "Teklif vermek ücretsiz."}>
         Açık talepler
       </PageTitle>
       <form className="card mb-6 flex flex-wrap items-end gap-3 p-4">
@@ -62,6 +70,11 @@ export default async function OpenRequests({
                 <span className="chip font-mono">{r.quantity}×</span>
                 <span className="chip"><IconPin className="h-3.5 w-3.5" />{r.city}</span>
                 {r.fileName && <span className="chip"><IconFile className="h-3.5 w-3.5" />Model</span>}
+                {feeOn && !r.quotes[0] && (
+                  <span className="chip border-filament-orange/30 bg-orange-50 font-mono text-orange-800">
+                    Teklif ücreti {formatTL(computeQuoteFee(r, rating, settings).amount)}
+                  </span>
+                )}
                 <span className="ml-auto font-mono text-[11px] text-ink-400">{formatDateTime(r.createdAt)}</span>
               </div>
             </Link>

@@ -55,6 +55,7 @@ export const LEDGER_LABELS: Record<string, string> = {
   ORDER_REFUND: "İade",
   EARNING: "Kazanç",
   COMMISSION: "Komisyon",
+  QUOTE_FEE: "Teklif ücreti",
   PAYOUT: "Haftalık ödeme",
   PAYOUT_REVERSAL: "Ödeme iadesi",
   ADJUSTMENT: "Düzeltme",

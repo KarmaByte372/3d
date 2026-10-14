@@ -13,11 +13,12 @@ import { completeTopUp, rejectTopUp } from "@/lib/payments";
 import { markPayoutFailed, markPayoutPaid } from "@/lib/payouts";
 import { runWeeklyPayouts } from "@/lib/scheduler";
 import { getSettings, updateSettings } from "@/lib/settings";
-import { getSmsConfig, hasSecret, saveIntegration } from "@/lib/integrations";
+import { getPaytrConfig, getSmsConfig, hasSecret, paytrReady, saveIntegration } from "@/lib/integrations";
+import { invalidTableLine } from "@/lib/quote-fee";
 import { MailError, sendMail } from "@/lib/mail";
 import { normalizeTrMobile } from "@/lib/phone";
 import { sendSms, SmsError } from "@/lib/sms";
-import { changeBalance } from "@/lib/wallet";
+import { changeWallet } from "@/lib/wallet";
 
 async function admin() {
   return requireUser("ADMIN");
@@ -82,8 +83,9 @@ export async function adjustBalanceAction(_: ActionState, f: FormData): Promise<
     if (!abs) throw new AppError("Geçerli bir tutar girin (eksi için başına - koyun).");
     const note = String(f.get("note") ?? "").trim();
     if (note.length < 5) throw new AppError("Düzeltme açıklaması zorunlu (en az 5 karakter).");
+    const wallet = f.get("wallet") === "CREDIT" ? "CREDIT" : "BALANCE";
     await prisma.$transaction((tx) =>
-      changeBalance(tx, String(f.get("userId")), negative ? -abs : abs, {
+      changeWallet(tx, String(f.get("userId")), wallet, negative ? -abs : abs, {
         type: "ADJUSTMENT",
         description: `${note} (admin: ${a.email})`,
       }),
@@ -227,6 +229,78 @@ export async function createAdminAction(_: ActionState, f: FormData): Promise<Ac
     const temp = crypto.randomBytes(9).toString("base64url");
     await prisma.user.create({ data: { email, name, role: "ADMIN", passwordHash: await hashPassword(temp) } });
     return done("/admin/kullanicilar", `Yönetici oluşturuldu. Geçici şifre: ${temp} (ilk girişte Hesabım'dan değiştirilmeli)`);
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function saveQuoteFeeSettingsAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const money = (k: string) => {
+      const v = parseTL(String(f.get(k) ?? ""));
+      if (v === null) throw new AppError("Tutar alanlarını kontrol edin.");
+      return v;
+    };
+    const pct = (k: string, min: number, max: number) => {
+      const v = Number(String(f.get(k) ?? "").replace(",", "."));
+      if (!Number.isFinite(v) || v < min || v > max) throw new AppError(`Yüzde alanlarını kontrol edin (${min}-${max}).`);
+      return v;
+    };
+    const table = (k: string, label: string) => {
+      const v = String(f.get(k) ?? "").replace(/\r/g, "").trim().slice(0, 3000);
+      const bad = invalidTableLine(v);
+      if (bad) throw new AppError(`${label}: "${bad}" satırı "anahtar=sayı" biçiminde olmalı.`);
+      return v;
+    };
+    const quoteFeeMin = money("quoteFeeMin");
+    const quoteFeeMax = money("quoteFeeMax");
+    if (quoteFeeMin > quoteFeeMax) throw new AppError("En düşük ücret en yüksekten büyük olamaz.");
+    const quoteFeeMinReviews = Number(f.get("quoteFeeMinReviews"));
+    if (!Number.isInteger(quoteFeeMinReviews) || quoteFeeMinReviews < 0 || quoteFeeMinReviews > 100) {
+      throw new AppError("Değerlendirme sayısı 0-100 olmalı.");
+    }
+    await updateSettings({
+      quoteFeeEnabled: f.get("quoteFeeEnabled") === "on" ? "true" : "false",
+      quoteFeeDefaultBase: money("quoteFeeDefaultBase"),
+      quoteFeeMin,
+      quoteFeeMax,
+      quoteFeeCategories: table("quoteFeeCategories", "Kategori tabanları"),
+      quoteFeeCities: table("quoteFeeCities", "Şehir çarpanları"),
+      quoteFeeBudgets: table("quoteFeeBudgets", "İş büyüklüğü"),
+      quoteFeeRatingTiers: table("quoteFeeRatingTiers", "Puan indirimi"),
+      quoteFeeFiveStarStep: pct("quoteFeeFiveStarStep", 0, 20),
+      quoteFeeFiveStarCap: pct("quoteFeeFiveStarCap", 0, 90),
+      quoteFeeMinReviews,
+      quoteFeeMaxDiscount: pct("quoteFeeMaxDiscount", 0, 90),
+    });
+    revalidatePath("/", "layout");
+    return { ok: "Teklif ücreti ayarları kaydedildi. Yeni teklifler bu ayarlarla ücretlendirilir." };
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
+export async function savePaytrSettingsAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const merchantId = String(f.get("paytrMerchantId") ?? "").trim();
+    if (merchantId && !/^\d{3,12}$/.test(merchantId)) throw new AppError("Mağaza no yalnızca rakamlardan oluşmalı.");
+    const maxInst = Number(f.get("paytrMaxInstallment") ?? 0);
+    const enabled = f.get("paytrEnabled") === "on";
+    const values = {
+      paytrEnabled: enabled ? "true" : "false",
+      paytrMerchantId: merchantId,
+      paytrTestMode: f.get("paytrTestMode") === "on" ? "true" : "false",
+      paytrMaxInstallment: String(Number.isInteger(maxInst) && maxInst >= 0 && maxInst <= 12 ? maxInst : 0),
+    };
+    const sec = (k: string) => ({ value: String(f.get(k) ?? "").trim(), clear: f.get(`${k}Clear`) === "on" });
+    await saveIntegration(values, { paytrMerchantKey: sec("paytrMerchantKey"), paytrMerchantSalt: sec("paytrMerchantSalt") });
+    if (enabled && !paytrReady(await getPaytrConfig())) {
+      return { error: "Kaydedildi, ancak PayTR'yi açmak için mağaza no, Merchant Key ve Merchant Salt gerekli." };
+    }
+    revalidatePath("/", "layout");
+    return { ok: "PayTR ayarları kaydedildi." };
   } catch (e) {
     return toActionError(e);
   }

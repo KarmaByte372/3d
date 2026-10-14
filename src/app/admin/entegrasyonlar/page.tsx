@@ -2,9 +2,12 @@ import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { IconMessage, IconShield } from "@/components/Icons";
 import { PageTitle } from "@/components/Shell";
 import { requireUser } from "@/lib/auth";
-import { getSmsConfig, getSmtpConfig, hasSecret } from "@/lib/integrations";
+import { getPaytrConfig, getSmsConfig, getSmtpConfig, hasSecret, paytrReady } from "@/lib/integrations";
+import { headers } from "next/headers";
+import { siteOrigin } from "@/lib/ip";
+import { IconCard } from "@/components/Icons";
 import { formatPhone } from "@/lib/phone";
-import { saveIdentitySettingAction, saveSmsSettingsAction, saveSmtpSettingsAction, testMailAction, testSmsAction } from "../actions";
+import { savePaytrSettingsAction, saveIdentitySettingAction, saveSmsSettingsAction, saveSmtpSettingsAction, testMailAction, testSmsAction } from "../actions";
 import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
@@ -45,6 +48,8 @@ export default async function IntegrationsPage() {
     hasSecret("netgsmPassword"),
     hasSecret("smtpPassword"),
   ]);
+  const [paytr, keySaved, saltSaved] = await Promise.all([getPaytrConfig(), hasSecret("paytrMerchantKey"), hasSecret("paytrMerchantSalt")]);
+  const origin = siteOrigin(await headers());
   const smsReady = sms.provider === "netgsm" && !!sms.usercode && !!sms.msgheader && smsSaved;
   const [{ identityRequired }, idCounts] = await Promise.all([
     getSettings(),
@@ -84,6 +89,52 @@ export default async function IntegrationsPage() {
             <span className="chip">Reddedilen: {countOf("REJECTED")}</span>
             <span className="chip">Girilmemiş: {countOf("NONE")}</span>
           </p>
+        </section>
+
+        {/* PAYTR */}
+        <section className="card p-6 lg:col-span-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold"><IconCard className="h-5 w-5 text-brand-600" /> Kartla ödeme · PayTR</h2>
+            <Status ok={paytrReady(paytr)}>{paytrReady(paytr) ? (paytr.testMode ? "Etkin · test modu" : "Etkin · canlı") : paytr.enabled ? "Eksik ayar" : "Kapalı"}</Status>
+          </div>
+          <p className="mb-4 text-sm text-ink-500">
+            Müşteriler bakiyelerini, atölyeler teklif bakiyelerini PayTR iFrame ile kartla yükler. Bilgiler PayTR Mağaza Paneli → Destek &amp; Kurulum → Entegrasyon Bilgileri&apos;ndedir.
+            PayTR panelinde <strong>Bildirim URL</strong> olarak şunu girin:{" "}
+            <code className="rounded bg-ink-50 px-1.5 py-0.5 font-mono text-xs">{origin}/api/paytr/callback</code>
+            {origin.startsWith("http://") && <span className="text-amber-700"> (canlı ortamda alan adı ve https önerilir)</span>}
+          </p>
+          <ActionForm action={savePaytrSettingsAction} className="space-y-4">
+            <div className="flex flex-wrap gap-6">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" name="paytrEnabled" defaultChecked={paytr.enabled} className="h-5 w-5 accent-brand-500" /> PayTR etkin
+              </label>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" name="paytrTestMode" defaultChecked={paytr.testMode} className="h-5 w-5 accent-brand-500" /> Test modu (gerçek para çekilmez)
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="label" htmlFor="paytrMerchantId">Mağaza no (merchant_id)</label>
+                <input className="input font-mono" id="paytrMerchantId" name="paytrMerchantId" defaultValue={paytr.merchantId} inputMode="numeric" autoComplete="off" />
+              </div>
+              <div>
+                <label className="label" htmlFor="paytrMerchantKey">Merchant Key</label>
+                <SecretInput name="paytrMerchantKey" saved={keySaved} />
+              </div>
+              <div>
+                <label className="label" htmlFor="paytrMerchantSalt">Merchant Salt</label>
+                <SecretInput name="paytrMerchantSalt" saved={saltSaved} />
+              </div>
+              <div>
+                <label className="label" htmlFor="paytrMaxInstallment">Taksit</label>
+                <select className="input" id="paytrMaxInstallment" name="paytrMaxInstallment" defaultValue={String(paytr.maxInstallment)}>
+                  <option value="0">Tek çekim</option>
+                  {[2, 3, 6, 9, 12].map((n) => <option key={n} value={n}>En fazla {n} taksit</option>)}
+                </select>
+              </div>
+            </div>
+            <SubmitButton>Kaydet</SubmitButton>
+          </ActionForm>
         </section>
 
         {/* NETGSM */}

@@ -27,6 +27,8 @@ model User {
   status          String    @default("ACTIVE")
   /// Müşteri için harcanabilir bakiye, işletme için ödenmeyi bekleyen kazanç (kuruş)
   balance         Int       @default(0)
+  /// Yalnızca işletme: PayTR/havale ile yüklenen, teklif ücretlerinde kullanılan bakiye (kuruş). IBAN'a ödenmez.
+  credit          Int       @default(0)
   /// Şifre değişince/sıfırlanınca artar; eski oturumlar geçersiz olur
   sessionVersion  Int       @default(0)
   createdAt       DateTime  @default(now())
@@ -114,6 +116,10 @@ model Quote {
   price        Int
   deliveryDays Int
   message      String       @default("")
+  /// Teklif verilirken alınan ücret (kuruş). İade edilmez.
+  feeAmount    Int          @default(0)
+  /// Ücretin hesap dökümü (JSON)
+  feeDetail    String?
   /// PENDING | ACCEPTED | REJECTED | WITHDRAWN
   status       String       @default("PENDING")
   createdAt    DateTime     @default(now())
@@ -164,6 +170,11 @@ model TopUp {
   amount      Int
   /// CARD | BANK_TRANSFER
   method      String
+  /// Yüklemenin gideceği cüzdan: BALANCE (müşteri bakiyesi) | CREDIT (işletme teklif bakiyesi)
+  target      String    @default("BALANCE")
+  /// Ödeme sağlayıcısı (mock | paytr) ve ödeme sayfası jetonu
+  provider    String?
+  providerToken String?
   /// PENDING | APPROVED | REJECTED
   status      String    @default("PENDING")
   /// Havale açıklamasına yazılacak kod veya ödeme sağlayıcı işlem numarası
@@ -175,12 +186,14 @@ model TopUp {
   ledger LedgerEntry[]
 }
 
-/// Bakiye hareketleri defteri. userId boşsa platform hesabıdır (komisyon geliri).
+/// Bakiye hareketleri defteri. userId boşsa platform hesabıdır (komisyon ve teklif ücreti geliri).
 model LedgerEntry {
   id           String      @id @default(cuid())
   userId       String?
   user         User?       @relation(fields: [userId], references: [id])
-  /// TOPUP | ORDER_HOLD | ORDER_REFUND | EARNING | COMMISSION | PAYOUT | PAYOUT_REVERSAL | ADJUSTMENT | WITHDRAWAL | WITHDRAWAL_REVERSAL
+  /// BALANCE (müşteri bakiyesi / işletme kazancı) | CREDIT (işletme teklif bakiyesi)
+  wallet       String      @default("BALANCE")
+  /// TOPUP | ORDER_HOLD | ORDER_REFUND | EARNING | COMMISSION | QUOTE_FEE | PAYOUT | PAYOUT_REVERSAL | ADJUSTMENT | WITHDRAWAL | WITHDRAWAL_REVERSAL
   type         String
   /// İşaretli tutar: + giriş, - çıkış (kuruş)
   amount       Int

@@ -14,7 +14,7 @@ export default async function Earnings() {
   const [settings, payouts, ledger, inEscrow] = await Promise.all([
     getSettings(),
     prisma.payout.findMany({ where: { businessId: user.id }, orderBy: { createdAt: "desc" }, include: { batch: true } }),
-    prisma.ledgerEntry.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 50 }),
+    prisma.ledgerEntry.findMany({ where: { userId: user.id, wallet: "BALANCE" }, orderBy: { createdAt: "desc" }, take: 50 }),
     prisma.order.aggregate({ where: { businessId: user.id, status: { in: ["IN_PROGRESS", "SHIPPED"] } }, _sum: { businessEarning: true } }),
   ]);
   const hasIban = !!user.business?.iban;
@@ -38,7 +38,7 @@ export default async function Earnings() {
       <div className="relative mb-8 overflow-hidden rounded-2xl bg-ink-900 p-5 text-sm text-ink-200">
         <div className="bg-plate absolute inset-0" />
         <p className="relative">
-        <strong className="text-white">Ödeme takvimi:</strong> Tamamlanan siparişlerin net kazancı bakiyene geçer. Her <strong className="text-filament-orange">çarşamba</strong> sabahı bakiyesi{" "}
+        <strong className="text-white">Ödeme takvimi:</strong> Tamamlanan siparişlerin tutarı kazancına geçer. Teklif ücretleri (kazançtan ödemeyi seçtiysen) buradan düşülür. Her <strong className="text-filament-orange">çarşamba</strong> sabahı bakiyesi{" "}
         {formatTL(settings.minPayout)} ve üzeri olan işletmeler için ödeme oluşturulur ve gün içinde IBAN&apos;a gönderilir.
         </p>
       </div>
@@ -66,7 +66,7 @@ export default async function Earnings() {
         </div>
       )}
 
-      <h2 className="mb-2 text-lg font-semibold">Hesap hareketleri</h2>
+      <h2 className="mb-2 text-lg font-semibold">Kazanç hareketleri</h2>
       <LedgerTable entries={ledger} />
     </>
   );

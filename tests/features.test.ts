@@ -70,7 +70,7 @@ describe("anlaşmazlık", () => {
     expect(await autoCompleteShippedOrders(new Date(Date.now() + 30 * 86400000))).toBe(0);
     await expect(openDispute(c.id, order.id, "ikinci kez bildirim denemesi")).rejects.toThrow();
     await completeOrder(order.id, { reason: "admin" });
-    expect(await balance(b.id)).toBe(40000);
+    expect(await balance(b.id)).toBe(50000); // komisyon %0: tutarın tamamı
   });
 });
 

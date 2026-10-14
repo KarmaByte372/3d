@@ -200,12 +200,15 @@ export default async function Home() {
             </span>
             <h2 className="mt-5 text-2xl font-bold">Atölyeler için: her çarşamba ödeme</h2>
             <p className="mt-3 text-sm text-ink-300">
-              Teklif vermek ücretsiz. Sadece tamamlanan işten {formatBps(settings.commissionBps)} komisyon alınır.
+              {settings.commissionBps > 0
+                ? `Tamamlanan işten ${formatBps(settings.commissionBps)} komisyon alınır.`
+                : "İşi alırsan komisyon yok: tutarın tamamı senin."}{" "}
+              {settings.quoteFeeEnabled === "true" && "Yalnızca teklif verirken küçük bir ücret ödersin; 5 yıldızların arttıkça ücretin düşer. "}
               Kazancın her çarşamba IBAN&apos;ına gönderilir.
             </p>
             <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4 font-mono text-sm">
               <div className="flex justify-between text-ink-300"><span>Sipariş tutarı</span><span>{formatTL(100000)}</span></div>
-              <div className="mt-1 flex justify-between text-ink-400"><span>Komisyon ({formatBps(settings.commissionBps)})</span><span>−{formatTL(example.commission)}</span></div>
+              <div className="mt-1 flex justify-between text-ink-400"><span>Komisyon ({formatBps(settings.commissionBps)})</span><span>{example.commission ? `−${formatTL(example.commission)}` : formatTL(0)}</span></div>
               <div className="my-3 h-px bg-white/10" />
               <div className="flex justify-between font-semibold"><span>Çarşamba hesabına</span><span className="text-filament-lime">{formatTL(example.earning)}</span></div>
             </div>

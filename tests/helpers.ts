@@ -26,7 +26,8 @@ export async function makeCustomer(balance = 0) {
   });
 }
 
-export async function makeBusiness(opts: { iban?: boolean; balance?: number } = {}) {
+/** Varsayılan olarak 1.000 TL teklif bakiyesi verilir ki teklif ücreti testleri bozmasın. */
+export async function makeBusiness(opts: { iban?: boolean; balance?: number; credit?: number } = {}) {
   n++;
   return prisma.user.create({
     data: {
@@ -35,6 +36,7 @@ export async function makeBusiness(opts: { iban?: boolean; balance?: number } = 
       name: `İşletme ${n}`,
       role: "BUSINESS",
       balance: opts.balance ?? 0,
+      credit: opts.credit ?? 100000,
       identityStatus: "VERIFIED",
       business: {
         create: {

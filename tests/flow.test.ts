@@ -13,7 +13,7 @@ beforeEach(resetDb);
 describe("bakiye yükleme", () => {
   it("havale onaylanınca bakiye artar, iki kez onaylanamaz", async () => {
     const c = await makeCustomer();
-    const t = await createBankTransferTopUp(c.id, 50000);
+    const t = await createBankTransferTopUp(c, 50000);
     expect(await balance(c.id)).toBe(0);
     await completeTopUp(t.id);
     expect(await balance(c.id)).toBe(50000);
@@ -22,14 +22,15 @@ describe("bakiye yükleme", () => {
   });
   it("reddedilen havale bakiyeyi değiştirmez", async () => {
     const c = await makeCustomer();
-    const t = await createBankTransferTopUp(c.id, 50000);
+    const t = await createBankTransferTopUp(c, 50000);
     await rejectTopUp(t.id, "Dekont bulunamadı");
     expect(await balance(c.id)).toBe(0);
   });
 });
 
 describe("sipariş akışı", () => {
-  it("teklif kabulü emanete alır, tamamlanınca %20 komisyon kesilir", async () => {
+  it("teklif kabulü emanete alır, tamamlanınca (ayarlıysa) %20 komisyon kesilir", async () => {
+    await updateSettings({ commissionBps: 2000 });
     const c = await makeCustomer(200000);
     const b = await makeBusiness();
     const r = await makeRequest(c.id);
@@ -75,6 +76,7 @@ describe("sipariş akışı", () => {
   });
 
   it("komisyon oranı sipariş anında sabitlenir", async () => {
+    await updateSettings({ commissionBps: 2000 });
     const c = await makeCustomer(200000);
     const b = await makeBusiness();
     const r = await makeRequest(c.id);
@@ -105,7 +107,7 @@ describe("sipariş akışı", () => {
     await markShipped(b.id, order.id, "");
     expect(await autoCompleteShippedOrders(new Date())).toBe(0);
     expect(await autoCompleteShippedOrders(new Date(Date.now() + 8 * 86400000))).toBe(1);
-    expect(await balance(b.id)).toBe(40000);
+    expect(await balance(b.id)).toBe(50000); // komisyon %0: tutarın tamamı
   });
 
   it("teklif sınırına uyulur", async () => {

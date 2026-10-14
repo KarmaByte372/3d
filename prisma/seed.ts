@@ -36,6 +36,7 @@ async function main() {
         legalFirstName: "MEHMET",
         legalLastName: "YILMAZ",
         birthYear: 1985,
+        credit: 50000, // demo: teklif ücretleri için 500 TL bakiye
         business: {
           create: {
             companyName: "Katman 3D Atölye",

@@ -3,7 +3,7 @@ import { prisma } from "./db";
 import { seal, unseal } from "./secret-box";
 
 /**
- * Netgsm ve SMTP ayarları. Admin panelinden girilen değerler veritabanında ("int." önekli Setting kayıtları)
+ * Netgsm, SMTP ve PayTR ayarları. Admin panelinden girilen değerler veritabanında ("int." önekli Setting kayıtları)
  * tutulur; şifreler şifrelenmiştir. Panelden hiç girilmemiş alanlar için .env değerleri kullanılır.
  */
 const P = "int.";
@@ -66,11 +66,45 @@ export async function getSmtpConfig(): Promise<SmtpConfig> {
   };
 }
 
+export type PaytrConfig = {
+  enabled: boolean;
+  merchantId: string;
+  merchantKey: string;
+  merchantSalt: string;
+  testMode: boolean;
+  /** 0 = taksit yok (tek çekim) */
+  maxInstallment: number;
+};
+
+export async function getPaytrConfig(): Promise<PaytrConfig> {
+  const db = await rows();
+  const e = process.env;
+  return {
+    enabled: pick(db, "paytrEnabled", e.PAYTR_ENABLED, "false") === "true",
+    merchantId: pick(db, "paytrMerchantId", e.PAYTR_MERCHANT_ID),
+    merchantKey: secret(db, "paytrMerchantKey", e.PAYTR_MERCHANT_KEY),
+    merchantSalt: secret(db, "paytrMerchantSalt", e.PAYTR_MERCHANT_SALT),
+    testMode: pick(db, "paytrTestMode", e.PAYTR_TEST_MODE, "true") === "true",
+    maxInstallment: Math.min(12, Math.max(0, Number(pick(db, "paytrMaxInstallment", e.PAYTR_MAX_INSTALLMENT, "0")) || 0)),
+  };
+}
+
+export function paytrReady(c: PaytrConfig) {
+  return c.enabled && !!c.merchantId && !!c.merchantKey && !!c.merchantSalt;
+}
+
+const ENV_SECRET: Record<string, string | undefined> = {
+  netgsmPassword: process.env.NETGSM_PASSWORD,
+  smtpPassword: process.env.SMTP_PASSWORD,
+  paytrMerchantKey: process.env.PAYTR_MERCHANT_KEY,
+  paytrMerchantSalt: process.env.PAYTR_MERCHANT_SALT,
+};
+
 /** Ekranda göstermek için: şifrelerin kendisi değil, yalnızca kayıtlı olup olmadığı. */
-export async function hasSecret(key: "netgsmPassword" | "smtpPassword") {
+export async function hasSecret(key: "netgsmPassword" | "smtpPassword" | "paytrMerchantKey" | "paytrMerchantSalt") {
   const db = await rows();
   if (db.has(key)) return !!db.get(key);
-  return !!(key === "netgsmPassword" ? process.env.NETGSM_PASSWORD : process.env.SMTP_PASSWORD);
+  return !!ENV_SECRET[key];
 }
 
 /**

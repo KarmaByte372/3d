@@ -6,8 +6,8 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { AppError, toActionError, type ActionState } from "@/lib/errors";
 import { normalizeTrIban } from "@/lib/iban";
-import { cancelOrder, markShipped, submitQuote, withdrawQuote } from "@/lib/marketplace";
-import { parseTL } from "@/lib/money";
+import { cancelOrder, markShipped, submitQuote, withdrawQuote, type FeeSource } from "@/lib/marketplace";
+import { formatTL, parseTL } from "@/lib/money";
 
 export async function submitQuoteAction(_: ActionState, formData: FormData): Promise<ActionState> {
   try {
@@ -18,9 +18,13 @@ export async function submitQuoteAction(_: ActionState, formData: FormData): Pro
     if (!Number.isInteger(deliveryDays)) return { error: "Teslim süresi tam sayı olmalı." };
     const message = String(formData.get("message") ?? "").trim().slice(0, 2000);
     const requestId = String(formData.get("requestId"));
-    await submitQuote({ businessId: user.id, requestId, price, deliveryDays, message });
-    revalidatePath(`/isletme/talepler/${requestId}`);
-    return { ok: "Teklifin gönderildi." };
+    const src = String(formData.get("feeSource") ?? "AUTO");
+    const feeSource: FeeSource = src === "EARNINGS" || src === "CREDIT" ? src : "AUTO";
+    const fee = formData.get("expectedFee");
+    const expectedFee = fee === null || fee === "" ? undefined : Number(fee);
+    const quote = await submitQuote({ businessId: user.id, requestId, price, deliveryDays, message, feeSource, expectedFee });
+    revalidatePath("/isletme", "layout");
+    return { ok: quote.feeAmount > 0 && formData.get("isNew") === "1" ? `Teklifin gönderildi. ${formatTL(quote.feeAmount)} teklif ücreti tahsil edildi.` : "Teklifin gönderildi." };
   } catch (e) {
     return toActionError(e);
   }

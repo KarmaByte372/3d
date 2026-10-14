@@ -96,7 +96,8 @@ Admin şifresi kurulumun sonunda **bir kez** ekrana yazılır.
   alt kullanıcısına sunucu IP'sinden erişim izni vermeyi unutma.
   SMS ayarlanmadan kayıt olanların kodları sadece loga düşer: `journalctl -u baski3d | grep sms:log`
 - **SMTP (isteğe bağlı):** Aynı sayfadan girilip test e-postasıyla denenebilir.
-- Kartla ödeme kapalıdır (`PAYMENT_PROVIDER="none"`). iyzico veya PayTR entegrasyonu gelince açılacak.
+- Kartla ödeme admin → Entegrasyonlar → PayTR'den açılır. PayTR panelinde Bildirim URL: `http://SUNUCU/api/paytr/callback`
+  (alan adı ve https alınınca güncelleyin). PayTR kapalıyken kartla ödeme gizlenir, havale çalışır.
 - Alan adı ve SSL olmadan site `http://IP` adresinden çalışır, ama şifreler şifrelenmeden gider.
   Gerçek kullanıcı almadan önce alan adı ve HTTPS kur.
 - Veritabanı `/opt/baski3d/prisma/prod.db`, yüklenen dosyalar `/opt/baski3d/uploads`. Bu ikisini düzenli yedekle.

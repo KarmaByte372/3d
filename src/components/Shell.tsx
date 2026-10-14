@@ -12,6 +12,7 @@ export function Shell({
   user,
   showBalance,
   balanceLabel = "Bakiye",
+  wallets,
   base,
   unread = 0,
   children,
@@ -23,6 +24,8 @@ export function Shell({
   user: { name: string; balance: number };
   showBalance?: boolean;
   balanceLabel?: string;
+  /** Başlıkta gösterilecek cüzdanlar (verilirse showBalance yerine kullanılır) */
+  wallets?: { label: string; amount: number; href: string }[];
   children: React.ReactNode;
 }) {
   const initials = user.name
@@ -44,7 +47,14 @@ export function Shell({
               </span>
             </div>
             <div className="flex flex-none items-center gap-2 sm:gap-3">
-              {showBalance && (
+              {wallets?.map((w) => (
+                <Link key={w.href} href={w.href} title={w.label}
+                  className="flex flex-col items-start rounded-xl border border-white/10 bg-white/5 px-2 py-0.5 leading-tight transition hover:bg-white/10 sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:py-1.5">
+                  <span className="text-[9px] uppercase tracking-wide text-ink-400 sm:text-xs sm:normal-case sm:tracking-normal sm:text-ink-300">{w.label}</span>
+                  <span className="font-mono text-xs font-semibold text-white sm:text-sm">{formatTL(w.amount)}</span>
+                </Link>
+              ))}
+              {showBalance && !wallets && (
                 <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
                   <IconWallet className="h-4 w-4 text-filament-orange" />
                   <span className="hidden text-xs text-ink-300 sm:inline">{balanceLabel}</span>
@@ -127,16 +137,19 @@ export function Stat({
   hint,
   icon,
   accent = "orange",
+  href,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon?: keyof typeof Icons;
   accent?: keyof typeof ACCENTS;
+  href?: string;
 }) {
   const Icon = icon ? Icons[icon] : null;
+  const Box = href ? Link : "div";
   return (
-    <div className="card relative overflow-hidden">
+    <Box href={href!} className={`card relative overflow-hidden ${href ? "card-hover" : ""}`}>
       <div className={`pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br to-transparent ${ACCENTS[accent]}`} />
       <div className="relative flex items-start justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">{label}</p>
@@ -144,7 +157,7 @@ export function Stat({
       </div>
       <p className="relative mt-2 font-display text-2xl font-bold tracking-tight">{value}</p>
       {hint && <p className="relative mt-1 text-xs text-ink-400">{hint}</p>}
-    </div>
+    </Box>
   );
 }
 
