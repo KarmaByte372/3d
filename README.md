@@ -91,9 +91,12 @@ Demo hesaplar (`db:seed:demo`): `musteri@demo.tr` ve `isletme@demo.tr`, şifre `
 - Oturum: imzalı JWT, httpOnly çerez. Şifreler bcrypt ile saklanır. Askıya alınan hesap anında erişimini kaybeder.
   Şifre değişince ya da admin sıfırlayınca diğer cihazlardaki oturumlar kapanır (`sessionVersion`).
 - Giriş denemeleri sınırlıdır: hesap başına 15 dakikada 5, IP başına 30 hatalı deneme.
-- **Oturum IP'ye bağlıdır:** IP adresi değişince (ör. Wi-Fi'dan mobil veriye geçiş) oturum kapanır ve kullanıcı yeniden
-  giriş yapar. Mobil operatörler IP'yi oturum sırasında da değiştirebildiği için mobil kullanıcılar daha sık çıkış
-  görebilir. `SESSION_BIND_IP="false"` ile kapatılabilir.
+- **Oturum ağa bağlıdır** (admin → Entegrasyonlar → Oturum güvenliği):
+  - *Esnek* (varsayılan): aynı operatör ağı (IPv4 /16, IPv6 /48) içindeki IP değişiklikleri sorun olmaz,
+    Wi-Fi ↔ mobil veri gibi ağ değişikliklerinde oturum kapanır.
+  - *Sıkı*: IP birebir değişince oturum kapanır. iCloud Özel Geçiş, VPN veya IP'si sık değişen bağlantılarda
+    kullanıcılar sürekli çıkış yapar.
+  - *Kapalı*: kontrol yok. `.env`'de `SESSION_BIND_IP="false"` admin ayarından bağımsız olarak kapatır.
 
 ## Telefon doğrulama ve SMS (Netgsm)
 

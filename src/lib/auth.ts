@@ -1,7 +1,8 @@
 import "server-only";
 import bcrypt from "bcryptjs";
 import { cookies, headers } from "next/headers";
-import { bindSessionToIp, clientIp } from "./ip";
+import { clientIp, ipMatches, type IpMode } from "./ip";
+import { getSettings } from "./settings";
 import { isIdentityRequired, needsIdentity } from "./identity";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
@@ -39,27 +40,39 @@ export async function endSession() {
   (await cookies()).delete(SESSION_COOKIE);
 }
 
+/** Ağ (IP) değişti mi? Admin → Entegrasyonlar → Oturum güvenliği ayarına göre. */
+async function networkChanged(sessionIp: string) {
+  const { sessionIpMode } = await getSettings();
+  return !ipMatches(sessionIp, clientIp(await headers()), sessionIpMode as IpMode);
+}
+
 /** Oturumdaki kullanıcıyı veritabanından yükler; askıya alınmış hesaplar oturumsuz sayılır. */
 export async function getCurrentUser() {
   const session = await verifySession((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) return null;
   // Ağ (IP) değiştiyse oturum geçersiz: kullanıcı yeniden giriş yapmalı
-  if (bindSessionToIp() && session.ip !== clientIp(await headers())) return null;
+  if (await networkChanged(session.ip)) return null;
   const user = await prisma.user.findUnique({ where: { id: session.sub }, include: { business: true } });
   // Şifre değiştiyse ya da admin sıfırladıysa eski oturumlar geçersizdir
   if (!user || user.status !== "ACTIVE" || user.sessionVersion !== session.ver) return null;
   return user;
 }
 
+/** Oturum yoksa giriş sayfasına; ağ değiştiği için düştüyse kullanıcıya nedenini göster. */
+async function toLogin(): Promise<never> {
+  const session = await verifySession((await cookies()).get(SESSION_COOKIE)?.value);
+  redirect(session && (await networkChanged(session.ip)) ? "/giris?sebep=ag" : "/giris");
+}
+
 export async function requireAnyUser() {
   const user = await getCurrentUser();
-  if (!user) redirect("/giris");
+  if (!user) return toLogin();
   return user;
 }
 
 export async function requireUser(role: "CUSTOMER" | "BUSINESS" | "ADMIN") {
   const user = await getCurrentUser();
-  if (!user) redirect("/giris");
+  if (!user) return toLogin();
   if (user.role !== role) redirect(HOME_BY_ROLE[user.role] ?? "/");
   // Telefonu SMS ile doğrulanmamış kullanıcı panele giremez (adminler hariç)
   if (user.role !== "ADMIN" && !user.phoneVerifiedAt) redirect("/dogrula");

@@ -401,6 +401,19 @@ export async function rejectIdentityAction(_: ActionState, f: FormData): Promise
   }
 }
 
+export async function saveSessionIpModeAction(_: ActionState, f: FormData): Promise<ActionState> {
+  try {
+    await admin();
+    const mode = String(f.get("sessionIpMode"));
+    if (!["strict", "subnet", "off"].includes(mode)) throw new AppError("Geçersiz seçim.");
+    await updateSettings({ sessionIpMode: mode });
+    revalidatePath("/", "layout");
+    return { ok: "Oturum güvenliği ayarı kaydedildi." };
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
 export async function saveIdentitySettingAction(_: ActionState, f: FormData): Promise<ActionState> {
   try {
     await admin();

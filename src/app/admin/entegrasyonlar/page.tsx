@@ -4,10 +4,10 @@ import { PageTitle } from "@/components/Shell";
 import { requireUser } from "@/lib/auth";
 import { getPaytrConfig, getSmsConfig, getSmtpConfig, hasSecret, paytrReady } from "@/lib/integrations";
 import { headers } from "next/headers";
-import { siteOrigin } from "@/lib/ip";
+import { clientIp, ipBindingForcedOff, siteOrigin } from "@/lib/ip";
 import { IconCard } from "@/components/Icons";
 import { formatPhone } from "@/lib/phone";
-import { savePaytrSettingsAction, saveIdentitySettingAction, saveSmsSettingsAction, saveSmtpSettingsAction, testMailAction, testSmsAction } from "../actions";
+import { saveSessionIpModeAction, savePaytrSettingsAction, saveIdentitySettingAction, saveSmsSettingsAction, saveSmtpSettingsAction, testMailAction, testSmsAction } from "../actions";
 import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
@@ -49,7 +49,10 @@ export default async function IntegrationsPage() {
     hasSecret("smtpPassword"),
   ]);
   const [paytr, keySaved, saltSaved] = await Promise.all([getPaytrConfig(), hasSecret("paytrMerchantKey"), hasSecret("paytrMerchantSalt")]);
-  const origin = siteOrigin(await headers());
+  const h = await headers();
+  const origin = siteOrigin(h);
+  const myIp = clientIp(h);
+  const { sessionIpMode } = await getSettings();
   const smsReady = sms.provider === "netgsm" && !!sms.usercode && !!sms.msgheader && smsSaved;
   const [{ identityRequired }, idCounts] = await Promise.all([
     getSettings(),
@@ -89,6 +92,31 @@ export default async function IntegrationsPage() {
             <span className="chip">Reddedilen: {countOf("REJECTED")}</span>
             <span className="chip">Girilmemiş: {countOf("NONE")}</span>
           </p>
+        </section>
+
+        {/* OTURUM GÜVENLİĞİ */}
+        <section className="card p-6 lg:col-span-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold"><IconShield className="h-5 w-5 text-brand-600" /> Oturum güvenliği · IP değişince çıkış</h2>
+            <Status ok={sessionIpMode !== "off" && !ipBindingForcedOff()}>
+              {ipBindingForcedOff() ? "Kapalı (.env)" : sessionIpMode === "strict" ? "Sıkı" : sessionIpMode === "subnet" ? "Esnek" : "Kapalı"}
+            </Status>
+          </div>
+          <p className="mb-4 text-sm text-ink-500">
+            Kullanıcının internet bağlantısı değişince oturum kapanır. <strong>Sıkı</strong> modda IP birebir aynı olmalıdır; iCloud Özel Geçiş,
+            VPN veya IP&apos;si sık değişen operatörlerde kullanıcılar sürekli çıkış yapar. <strong>Esnek</strong> mod aynı operatör ağı içindeki
+            IP değişikliklerine izin verir, Wi-Fi ↔ mobil veri geçişinde yine çıkış yapar. Sunucunun şu an gördüğü IP adresin:{" "}
+            <code className="rounded bg-ink-50 px-1.5 py-0.5 font-mono text-xs">{myIp}</code>
+            {ipBindingForcedOff() && <span className="text-amber-700"> · Sunucudaki .env dosyasında SESSION_BIND_IP=&quot;false&quot; olduğu için kontrol kapalı.</span>}
+          </p>
+          <ActionForm action={saveSessionIpModeAction} className="flex flex-wrap items-center gap-3">
+            <select className="input max-w-sm" name="sessionIpMode" defaultValue={sessionIpMode}>
+              <option value="subnet">Esnek: ağ/operatör değişince çıkış (önerilen)</option>
+              <option value="strict">Sıkı: IP değişince çıkış</option>
+              <option value="off">Kapalı: IP kontrolü yok</option>
+            </select>
+            <SubmitButton>Kaydet</SubmitButton>
+          </ActionForm>
         </section>
 
         {/* PAYTR */}

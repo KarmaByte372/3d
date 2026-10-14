@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { HOME_BY_ROLE, SESSION_COOKIE, verifySession } from "@/lib/session";
-import { bindSessionToIp, clientIp } from "@/lib/ip";
 
 const AREAS: Record<string, string> = { "/musteri": "CUSTOMER", "/isletme": "BUSINESS", "/admin": "ADMIN" };
 
@@ -23,11 +22,7 @@ export async function middleware(req: NextRequest) {
 
   const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
   if (!session) return go(req, "/giris", { next: pathname });
-  if (bindSessionToIp() && session.ip !== clientIp(req.headers)) {
-    const res = go(req, "/giris", { sebep: "ag", next: pathname });
-    res.cookies.delete(SESSION_COOKIE);
-    return res;
-  }
+  // IP (ağ) kontrolü sayfada yapılır (auth.ts): ayarı veritabanından okur, middleware okuyamaz
   if (session.role !== AREAS[area]) return go(req, HOME_BY_ROLE[session.role] ?? "/");
   return NextResponse.next();
 }

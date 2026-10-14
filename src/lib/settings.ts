@@ -8,6 +8,8 @@ import { prisma } from "./db";
 export const DEFAULT_SETTINGS = {
   /** TC kimlik doğrulaması zorunlu mu ("true"/"false"); admin → Entegrasyonlar'dan açılır */
   identityRequired: "false",
+  /** IP değişince oturumu kapatma: strict (birebir IP) | subnet (aynı ağ bloğu) | off */
+  sessionIpMode: "subnet",
   /** Sitenin/markanın görünen adı (logo, başlıklar, SMS metinleri) */
   siteName: "Baskı3D",
   /** Yasal metinlerde geçen şirket bilgileri */

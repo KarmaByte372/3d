@@ -132,3 +132,16 @@ describe("oturum belirteci", () => {
     expect(await verifySession(t)).toEqual({ sub: "u1", role: "CUSTOMER", ver: 2, ip: "85.1.2.3" });
   });
 });
+
+describe("oturum IP kontrolü", () => {
+  it("sıkı, esnek ve kapalı modlar", async () => {
+    const { ipMatches } = await import("@/lib/ip");
+    expect(ipMatches("85.100.1.2", "85.100.1.2", "strict")).toBe(true);
+    expect(ipMatches("85.100.1.2", "85.100.7.9", "strict")).toBe(false);
+    expect(ipMatches("85.100.1.2", "85.100.7.9", "subnet")).toBe(true);
+    expect(ipMatches("85.100.1.2", "176.33.1.2", "subnet")).toBe(false); // Wi-Fi → mobil veri
+    expect(ipMatches("2a02:ff0:1:2::1", "2a02:ff0:1:9::5", "subnet")).toBe(true);
+    expect(ipMatches("2a02:ff0:1:2::1", "85.100.1.2", "subnet")).toBe(false);
+    expect(ipMatches("85.100.1.2", "176.33.1.2", "off")).toBe(true);
+  });
+});
