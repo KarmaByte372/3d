@@ -22,7 +22,15 @@ const PendingContext = createContext(false);
 export function ActionForm({ action, children, className, confirm, resetOnSuccess }: Props) {
   const ref = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(async (prev: ActionState, fd: FormData) => {
-    const result = await action(prev, fd);
+    let result: ActionState;
+    try {
+      result = await action(prev, fd);
+    } catch (e) {
+      // Yönlendirme gibi Next.js kontrol akışı hatalarını bozma
+      if (e && typeof e === "object" && "digest" in e && String((e as { digest: unknown }).digest).startsWith("NEXT_")) throw e;
+      console.error(e);
+      return { error: "Gönderilemedi. Bağlantını kontrol edip tekrar dene; sorun sürerse sayfayı yenile." };
+    }
     if (resetOnSuccess && !result.error) ref.current?.reset();
     return result;
   }, {});

@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
     return [{ source: "/kosullar", destination: "/kullanim-sartlari", permanent: true }];
   },
   experimental: {
-    serverActions: { bodySizeLimit: "50mb" },
+    // Model dosyası (en fazla 50 MB) + form alanları. İki sınır da gerekli: middleware olan sayfalarda
+    // Next isteği varsayılan 10 MB'ta keser ve form "Unexpected end of form" hatasıyla yarım kalır.
+    serverActions: { bodySizeLimit: "52mb" },
+    middlewareClientMaxBodySize: "52mb",
   },
 };
 

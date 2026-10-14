@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { IconUpload } from "./Icons";
 
+/** Sunucudaki sınırla aynı (lib/files.ts MAX_UPLOAD_BYTES) */
+const MAX_BYTES = 50 * 1024 * 1024;
+
 /** Sürükle-bırak destekli model dosyası alanı; gerçek <input type="file"> ile çalışır. */
 export function FileDrop({ name, accept }: { name: string; accept: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [over, setOver] = useState(false);
+  const [error, setError] = useState("");
   return (
     <label
       onDragOver={() => setOver(true)}
@@ -23,7 +27,17 @@ export function FileDrop({ name, accept }: { name: string; accept: string }) {
         aria-label="Model dosyası"
         accept={accept}
         className="absolute inset-0 cursor-pointer opacity-0"
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        onChange={(e) => {
+          const f = e.target.files?.[0] ?? null;
+          if (f && f.size > MAX_BYTES) {
+            setError(`Dosya ${(f.size / 1024 / 1024).toFixed(1)} MB. En fazla 50 MB yükleyebilirsin; büyük modelleri ZIP'leyerek küçültebilirsin.`);
+            e.target.value = "";
+            setFile(null);
+            return;
+          }
+          setError("");
+          setFile(f);
+        }}
       />
       <span className="grid h-12 w-12 place-items-center rounded-2xl bg-ink-900 text-filament-orange shadow-glow">
         <IconUpload className="h-6 w-6" />
@@ -39,6 +53,7 @@ export function FileDrop({ name, accept }: { name: string; accept: string }) {
           <span className="font-mono text-xs text-ink-400">{accept.replaceAll(",", " · ")} · en fazla 50 MB</span>
         </>
       )}
+      {error && <span className="text-sm font-medium text-red-600">{error}</span>}
     </label>
   );
 }
