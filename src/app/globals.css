@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ink-50 font-sans text-ink-900;
+    font-feature-settings: "ss01", "cv11";
+  }
+  h1, h2, h3 {
+    @apply font-display tracking-tight;
+  }
+  ::selection {
+    @apply bg-brand-200 text-ink-900;
+  }
+}
+
+@layer components {
+  /* Formlar */
+  .input {
+    @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 shadow-sm outline-none transition placeholder:text-ink-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15;
+  }
+  select.input {
+    @apply pr-8;
+  }
+  input[type="file"].input {
+    @apply cursor-pointer py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-900 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-ink-700;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-500;
+  }
+
+  /* Butonlar */
+  .btn {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-filament-orange to-filament-pink px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-ink-700 shadow-sm transition hover:border-ink-300 hover:bg-ink-50 active:scale-[.98] disabled:opacity-60;
+  }
+  .btn-dark {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-700 active:scale-[.98] disabled:opacity-60;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-red-700 active:scale-[.98] disabled:opacity-60;
+  }
+
+  /* Kartlar ve tablolar */
+  .card {
+    @apply rounded-2xl border border-ink-100 bg-white p-5 shadow-card;
+  }
+  .card-hover {
+    @apply transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-glow;
+  }
+  .table {
+    @apply min-w-full text-sm;
+  }
+  .table thead {
+    @apply bg-ink-50/80;
+  }
+  .table th {
+    @apply whitespace-nowrap px-4 py-2.5 text-left font-mono text-[11px] font-medium uppercase tracking-wider text-ink-400;
+  }
+  .table td {
+    @apply border-t border-ink-100 px-4 py-3 align-top text-ink-700;
+  }
+  .table tbody tr {
+    @apply transition-colors hover:bg-ink-50/60;
+  }
+  .link {
+    @apply font-semibold text-brand-600 underline-offset-4 hover:underline;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-2.5 py-1 text-xs font-medium text-ink-600;
+  }
+  .eyebrow {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-brand-600;
+  }
+
+  /* Tema dokuları */
+  .text-filament {
+    @apply bg-gradient-to-r from-filament-orange via-filament-pink to-filament-cyan bg-clip-text text-transparent;
+  }
+  .filament-line {
+    @apply h-[3px] bg-gradient-to-r from-filament-orange via-filament-pink to-filament-cyan;
+  }
+  /* Baskı tablası ızgarası */
+  .bg-plate {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .bg-plate-light {
+    background-image:
+      linear-gradient(rgba(13, 18, 29, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(13, 18, 29, 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  /* Katman çizgileri (FDM yüzey dokusu) */
+  .bg-layers {
+    background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Telefonda tablolar: her satır etiketli bir karta dönüşür (yana kaydırma yok) */
+@media (max-width: 639px) {
+  .table thead {
+    display: none;
+  }
+  .table,
+  .table tbody,
+  .table tr {
+    display: block;
+    width: 100%;
+  }
+  .table tr {
+    border-top: 1px solid theme("colors.ink.100");
+    padding: 0.75rem 1rem;
+  }
+  .table tbody tr:first-child {
+    border-top: 0;
+  }
+  .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 0;
+    padding: 0.2rem 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .table td::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    text-align: left;
+    font-family: theme("fontFamily.mono");
+    font-size: 11px;
+    line-height: 1.6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: theme("colors.ink.400");
+  }
+  .table td[data-label=""] {
+    justify-content: flex-start;
+  }
+  .table td[data-label=""]::before {
+    content: none;
+  }
+}

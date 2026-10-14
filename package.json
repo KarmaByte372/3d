@@ -1,0 +1,42 @@
+{
+  "name": "baski3d",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "db:push": "prisma db push",
+    "db:seed": "tsx --env-file=.env prisma/seed.ts",
+    "db:seed:demo": "tsx --env-file=.env prisma/seed.ts --demo",
+    "payouts:run": "tsx --env-file=.env scripts/run-payouts.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "bcryptjs": "2.4.3",
+    "jose": "5.9.6",
+    "next": "15.5.27",
+    "node-cron": "4.6.0",
+    "nodemailer": "10.0.10",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "server-only": "0.0.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "2.4.6",
+    "@types/node": "22.10.2",
+    "@types/nodemailer": "8.0.2",
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.5.29",
+    "prisma": "6.19.3",
+    "tailwindcss": "3.4.19",
+    "tsx": "4.23.15",
+    "typescript": "5.7.2",
+    "vitest": "3.2.4"
+  }
+}

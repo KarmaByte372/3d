@@ -1,0 +1,332 @@
+// Tüm para tutarları kuruş cinsinden tamsayı (Int) olarak tutulur: 1 TL = 100.
+// Oranlar baz puan (bps) cinsindendir: %20 = 2000.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String
+  /// Türk cep numarası, 10 hane (5XXXXXXXXX)
+  phone           String?
+  /// SMS ile doğrulandığı an; boşsa kullanıcı panele giremez (adminler hariç)
+  phoneVerifiedAt DateTime?
+  /// Telefon değiştirme sürecinde doğrulama bekleyen yeni numara
+  pendingPhone    String?
+  /// CUSTOMER | BUSINESS | ADMIN
+  role            String
+  /// ACTIVE | SUSPENDED
+  status          String    @default("ACTIVE")
+  /// Müşteri için harcanabilir bakiye, işletme için ödenmeyi bekleyen kazanç (kuruş)
+  balance         Int       @default(0)
+  /// Yalnızca işletme: PayTR/havale ile yüklenen, teklif ücretlerinde kullanılan bakiye (kuruş). IBAN'a ödenmez.
+  credit          Int       @default(0)
+  /// Şifre değişince/sıfırlanınca artar; eski oturumlar geçersiz olur
+  sessionVersion  Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  /// --- TC kimlik doğrulama ---
+  /// NONE | PENDING (admin onayı bekliyor) | VERIFIED | REJECTED
+  identityStatus     String    @default("NONE")
+  /// TCKN AES-256-GCM ile şifreli
+  tcknEnc            String?
+  /// TCKN'nin HMAC özeti: aynı numaranın ikinci hesapta kullanılmasını engellemek için
+  tcknHash           String?
+  legalFirstName     String?
+  legalLastName      String?
+  birthYear          Int?
+  /// FORMAT (algoritma) | ADMIN (yönetici onayı) | KPS (NVİ sorgusu)
+  identityMethod     String?
+  identityVerifiedAt DateTime?
+  identityNote       String?
+
+  business       BusinessProfile?
+  requests       PrintRequest[]   @relation("CustomerRequests")
+  quotes         Quote[]          @relation("BusinessQuotes")
+  customerOrders Order[]          @relation("CustomerOrders")
+  businessOrders Order[]          @relation("BusinessOrders")
+  topUps         TopUp[]
+  ledger         LedgerEntry[]
+  payouts        Payout[]
+  notifications  Notification[]
+  messages       Message[]
+  reviewsGiven   Review[]         @relation("CustomerReviews")
+  reviewsGot     Review[]         @relation("BusinessReviews")
+  withdrawals    Withdrawal[]
+
+  @@index([tcknHash])
+}
+
+model BusinessProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName  String
+  taxNumber    String?
+  city         String
+  description  String   @default("")
+  /// Virgülle ayrılmış: FDM, SLA, SLS ...
+  technologies String   @default("")
+  /// Virgülle ayrılmış: PLA, PETG, ABS, Reçine ...
+  materials    String   @default("")
+  iban         String?
+  ibanHolder   String?
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model PrintRequest {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    User      @relation("CustomerRequests", fields: [customerId], references: [id])
+  title       String
+  description String
+  technology  String?
+  material    String
+  color       String?
+  quantity    Int       @default(1)
+  /// Müşterinin tahmini bütçesi (kuruş), opsiyonel
+  budget      Int?
+  city        String
+  deadline    DateTime?
+  fileName    String?
+  filePath    String?
+  /// OPEN | ASSIGNED | CANCELLED
+  status      String    @default("OPEN")
+  createdAt   DateTime  @default(now())
+
+  quotes Quote[]
+  order  Order?
+}
+
+model Quote {
+  id           String       @id @default(cuid())
+  requestId    String
+  request      PrintRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  businessId   String
+  business     User         @relation("BusinessQuotes", fields: [businessId], references: [id])
+  price        Int
+  deliveryDays Int
+  message      String       @default("")
+  /// Teklif verilirken alınan ücret (kuruş). İade edilmez.
+  feeAmount    Int          @default(0)
+  /// Ücretin hesap dökümü (JSON)
+  feeDetail    String?
+  /// PENDING | ACCEPTED | REJECTED | WITHDRAWN
+  status       String       @default("PENDING")
+  createdAt    DateTime     @default(now())
+
+  order Order?
+
+  @@unique([requestId, businessId])
+}
+
+model Order {
+  id               String       @id @default(cuid())
+  requestId        String       @unique
+  request          PrintRequest @relation(fields: [requestId], references: [id])
+  quoteId          String       @unique
+  quote            Quote        @relation(fields: [quoteId], references: [id])
+  customerId       String
+  customer         User         @relation("CustomerOrders", fields: [customerId], references: [id])
+  businessId       String
+  business         User         @relation("BusinessOrders", fields: [businessId], references: [id])
+  /// Müşterinin ödediği toplam tutar (kuruş) — sipariş boyunca emanette tutulur
+  amount           Int
+  /// Sipariş anındaki komisyon oranı (bps) — sonradan ayar değişse de sabit kalır
+  commissionBps    Int
+  commissionAmount Int
+  businessEarning  Int
+  /// IN_PROGRESS | SHIPPED | COMPLETED | CANCELLED
+  status           String       @default("IN_PROGRESS")
+  trackingInfo     String?
+  cancelReason     String?
+  createdAt        DateTime     @default(now())
+  shippedAt        DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  /// Müşteri sorun bildirdiyse otomatik onay durur, admin karar verir
+  disputed         Boolean      @default(false)
+  disputeReason    String?
+  disputedAt       DateTime?
+
+  ledger   LedgerEntry[]
+  messages Message[]
+  review   Review?
+}
+
+model TopUp {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  amount      Int
+  /// CARD | BANK_TRANSFER
+  method      String
+  /// Yüklemenin gideceği cüzdan: BALANCE (müşteri bakiyesi) | CREDIT (işletme teklif bakiyesi)
+  target      String    @default("BALANCE")
+  /// Ödeme sağlayıcısı (mock | paytr) ve ödeme sayfası jetonu
+  provider    String?
+  providerToken String?
+  /// PENDING | APPROVED | REJECTED
+  status      String    @default("PENDING")
+  /// Havale açıklamasına yazılacak kod veya ödeme sağlayıcı işlem numarası
+  reference   String    @unique
+  adminNote   String?
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  ledger LedgerEntry[]
+}
+
+/// Bakiye hareketleri defteri. userId boşsa platform hesabıdır (komisyon ve teklif ücreti geliri).
+model LedgerEntry {
+  id           String      @id @default(cuid())
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id])
+  /// BALANCE (müşteri bakiyesi / işletme kazancı) | CREDIT (işletme teklif bakiyesi)
+  wallet       String      @default("BALANCE")
+  /// TOPUP | ORDER_HOLD | ORDER_REFUND | EARNING | COMMISSION | QUOTE_FEE | PAYOUT | PAYOUT_REVERSAL | ADJUSTMENT | WITHDRAWAL | WITHDRAWAL_REVERSAL
+  type         String
+  /// İşaretli tutar: + giriş, - çıkış (kuruş)
+  amount       Int
+  balanceAfter Int?
+  description  String
+  orderId      String?
+  order        Order?      @relation(fields: [orderId], references: [id])
+  topUpId      String?
+  topUp        TopUp?      @relation(fields: [topUpId], references: [id])
+  payoutId     String?
+  payout       Payout?     @relation(fields: [payoutId], references: [id])
+  withdrawalId String?
+  withdrawal   Withdrawal? @relation(fields: [withdrawalId], references: [id])
+  createdAt    DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+/// Her çarşamba oluşturulan haftalık ödeme partisi.
+model PayoutBatch {
+  id          String   @id @default(cuid())
+  /// Ödeme gününün tarihi (YYYY-MM-DD, İstanbul saatiyle). Aynı çarşamba için ikinci parti oluşmaz.
+  payoutDate  String   @unique
+  totalAmount Int      @default(0)
+  /// OPEN | COMPLETED
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+
+  payouts Payout[]
+}
+
+model Payout {
+  id            String      @id @default(cuid())
+  batchId       String
+  batch         PayoutBatch @relation(fields: [batchId], references: [id])
+  businessId    String
+  business      User        @relation(fields: [businessId], references: [id])
+  amount        Int
+  iban          String
+  ibanHolder    String
+  /// PENDING | PAID | FAILED
+  status        String      @default("PENDING")
+  /// Banka dekont/işlem numarası
+  bankReference String?
+  failReason    String?
+  paidAt        DateTime?
+  createdAt     DateTime    @default(now())
+
+  ledger LedgerEntry[]
+
+  @@unique([batchId, businessId])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String   @default("")
+  href      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+/// Sipariş içi müşteri ↔ işletme yazışması
+model Message {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  customerId String
+  customer   User     @relation("CustomerReviews", fields: [customerId], references: [id])
+  businessId String
+  business   User     @relation("BusinessReviews", fields: [businessId], references: [id])
+  /// 1-5
+  rating     Int
+  comment    String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
+}
+
+/// KULLANILMIYOR: IBAN'a para çekme kaldırıldı (iadeler bakiyede kalır). Tablo eski kayıtlar için tutuluyor.
+model Withdrawal {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  amount        Int
+  iban          String
+  ibanHolder    String
+  /// PENDING | PAID | REJECTED
+  status        String    @default("PENDING")
+  bankReference String?
+  adminNote     String?
+  createdAt     DateTime  @default(now())
+  processedAt   DateTime?
+
+  ledger LedgerEntry[]
+}
+
+/// SMS doğrulama kodları (kodun kendisi değil, HMAC özeti saklanır)
+model PhoneCode {
+  id         String    @id @default(cuid())
+  phone      String
+  /// VERIFY | RESET
+  purpose    String
+  userId     String?
+  codeHash   String
+  attempts   Int       @default(0)
+  ip         String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, purpose, createdAt])
+  @@index([ip, createdAt])
+}
